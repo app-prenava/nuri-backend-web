@@ -1,0 +1,19 @@
+# Change host DB
+DB_HOST=mysql
+DB_USERNAME=nuri
+DB_PORT=3306
+
+# Stop & bersihkan semua container
+docker compose down
+
+# Build ulang & jalankan
+docker compose up -d --build
+
+# Build ulang dengan image lama
+docker compose up -d
+
+# Cek runtime frankenPHP
+docker logs -f nuri-backend-app
+
+# Jalankan migrate + seed
+docker exec -it nuri-backend-app php artisan migrate --seed
