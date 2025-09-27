@@ -1,7 +1,7 @@
 
 # Nuri Backend Web
 
-**Built with [Laravel](https://laravel.com/) + [FrankenPHP](https://frankenphp.org/) + Docker**  
+**Built with [Laravel](https://laravel.com/) + [FrankenPHP](https://frankenphp.dev/) + Docker**  
 
 This is the backend API for Nuri, leveraging Laravel’s robust framework, FrankenPHP for ultra-fast PHP runtime, and Docker for consistent, isolated development environments.
 
