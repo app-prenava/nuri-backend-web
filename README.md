@@ -18,7 +18,7 @@ DB_CONNECTION=mysql
 DB_HOST=mysql
 DB_PORT=3306
 DB_DATABASE=nuri_db
-DB_USERNAME=root
+DB_USERNAME=nuri
 DB_PASSWORD=
 
 3. Build and start the Docker containers:
