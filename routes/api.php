@@ -13,21 +13,23 @@ use App\Http\Controllers\PredictionController;
 use App\Http\Controllers\WaterIntakeController;
 use App\Http\Controllers\PregnancyCalculatorController;
 use App\Http\Controllers\PostpartumArticleController;
-use App\Http\Controllers\HomeProfileController;
+use App\Http\Controllers\PostpartumController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\IconsController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
 
-
-// Auth routes - Pindahkan ke api.php jika menggunakan API
-Route::group(['middleware' => 'api', 'prefix' => 'auth'], function () {
+Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::post('refresh', [AuthController::class, 'refresh']);
-    Route::get('me', [AuthController::class, 'me']);
+
+    Route::middleware('jwt.auth')->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
+        Route::post('refresh', [AuthController::class, 'refresh']);
+        Route::get('me', [AuthController::class, 'me']);
+    });
 });
 
 // Semua route terproteksi
@@ -71,7 +73,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/Recovery/history', [PostpartumController::class, 'histindex']);
 
     // Home
-    Route::get('/home', [HomeProfileController::class, 'home']);
+    Route::get('/home', [HomeController::class, 'home']);
 
     // Prediksi Depresi
     Route::get('/prediksidepresi', [PrediksiDepresiController::class, 'index']);
@@ -134,12 +136,11 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 });
 
-// CSRF Token
-Route::get('/token', function () {
-    return csrf_token();
-});
 
 // Welcome
 Route::get('/', function () {
-    return view('welcome');
+    return response()->json([
+        'message' => 'Welcome to Prenava Backend',
+    ], 200);
 });
+
