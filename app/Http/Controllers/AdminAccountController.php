@@ -97,7 +97,6 @@ class AdminAccountController extends Controller
 
     public function reset(Request $request, int $userId): JsonResponse
     {
-        // 1) Validasi token admin dari header (tanpa middleware)
         [, $role] = AuthToken::uidRoleOrFail($request);
         if ($role !== 'admin') {
             return response()->json([
@@ -106,7 +105,6 @@ class AdminAccountController extends Controller
             ], 401);
         }
 
-        // 2) Validasi input
         $v = Validator::make($request->all(), [
             'new_password' => ['required','string','min:6'],
         ]);
@@ -118,7 +116,6 @@ class AdminAccountController extends Controller
             ], 422);
         }
 
-        // 3) Update password + revoke all tokens (token_version + 1)
         $rows = DB::table('users')
             ->where('user_id', $userId)
             ->update([
@@ -206,7 +203,7 @@ class AdminAccountController extends Controller
             ], 401);
         }
 
-        $filterRole = $request->query('role'); // contoh: ?role=bidan
+        $filterRole = $request->query('role');
 
         $query = DB::table('users')
             ->select('user_id', 'name', 'email', 'role', 'is_active', 'created_at', 'updated_at')
