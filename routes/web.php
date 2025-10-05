@@ -26,16 +26,16 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Auth::routes();
+Auth::routes();
 
-// Route::get('/register/bidan', [RegisterController::class, 'showBidanRegistrationForm'])->name('register.bidan.form');
-// Route::post('/register/bidan', [RegisterController::class, 'registerBidan'])->name('register.bidan');
+Route::get('/register/bidan', [RegisterController::class, 'showBidanRegistrationForm'])->name('register.bidan.form');
+Route::post('/register/bidan', [RegisterController::class, 'registerBidan'])->name('register.bidan');
 
-// Route::get('/register/dinkes', [RegisterController::class, 'showDinkesRegistrationForm'])->name('register.dinkes.form');
-// Route::post('/register/dinkes', [RegisterController::class, 'registerDinkes'])->name('register.dinkes');
+Route::get('/register/dinkes', [RegisterController::class, 'showDinkesRegistrationForm'])->name('register.dinkes.form');
+Route::post('/register/dinkes', [RegisterController::class, 'registerDinkes'])->name('register.dinkes');
 
-// Route::get('/login', [LoginController::class, 'showLoginForm'])->name('auth.login');
-// Route::post('/login', [LoginController::class, 'login'])->name('login');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('auth.login');
+Route::post('/login', [LoginController::class, 'login'])->name('login');
 
 // Protected Routes for Bidan - Using the check.role middleware
 Route::prefix('bidan')->group(function () {
@@ -104,14 +104,14 @@ Route::prefix('dinkes')->group(function () {
     Route::get('/laporan', [InsentifController::class, 'getLaporanTransaksi'])->middleware('role:admin');
 
 // Home route (redirect based on role)
-// Route::get('/home', function() {
-//     if (auth()->check()) {
-//         if (auth()->user()->role === 'bidan') {
-//             return redirect()->route('bidan.dashboard');
-//         } elseif (auth()->user()->role === 'dinkes') {
-//             return redirect()->route('dinkes.dashboard');
-//         }
-//     }
+Route::get('/home', function() {
+    if (auth()->check()) {
+        if (auth()->user()->role === 'bidan') {
+            return redirect()->route('bidan.dashboard');
+        } elseif (auth()->user()->role === 'dinkes') {
+            return redirect()->route('dinkes.dashboard');
+        }
+    }
 
-//     return redirect()->route('login');
-// })->name('home');
+    return redirect()->route('login');
+})->name('home');
