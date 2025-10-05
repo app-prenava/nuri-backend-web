@@ -132,7 +132,7 @@
                         </div>
                         <div class="card-footer bg-light">
                             <div class="d-flex justify-content-between">
-                                <a href="{{ route('ibu_hamil.detail', $ibu->id) }}" class="btn btn-sm btn-primary">Detail</a>
+                                <a href="{{ route('ibu_hamil.detail', $ibu->user_id) }}" class="btn btn-sm btn-primary">Detail</a>
                             </div>
                         </div>
                     </div>
