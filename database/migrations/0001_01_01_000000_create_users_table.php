@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('password');
             $table->boolean('is_active')->default(true);
+            $table->unsignedInteger('token_version')->default(1);
             $table->timestamps();
         });
     }

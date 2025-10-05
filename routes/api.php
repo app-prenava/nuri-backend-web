@@ -18,6 +18,10 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\IconsController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\AddProfileController;
+use App\Http\Controllers\AdminAccountController;
+use App\Http\Controllers\AdminUserStatusController;
+
 use Illuminate\Support\Facades\Route;
 
 
@@ -31,6 +35,18 @@ Route::prefix('auth')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
     });
 });
+
+Route::post('/profile', [AddProfileController::class, 'create']);
+Route::put('/profile',  [AddProfileController::class, 'update']);
+
+Route::get('/admin/users', [AdminAccountController::class, 'allUser']);
+Route::post('/admin/create/account/bidan',  [AdminAccountController::class, 'createBidan']);
+Route::post('/admin/create/account/dinkes', [AdminAccountController::class, 'createDinkes']);
+Route::post('/admin/users/{userId}/reset-password', [AdminAccountController::class, 'reset']);
+
+
+Route::post('/admin/users/{userId}/deactivate', [AdminUserStatusController::class, 'deactivate']);
+Route::post('/admin/users/{userId}/activate',   [AdminUserStatusController::class, 'activate']);
 
 // Semua route terproteksi
 Route::group(['middleware' => 'auth:api'], function () {
