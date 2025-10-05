@@ -17,3 +17,10 @@ docker logs -f nuri-backend-app
 
 # Jalankan migrate + seed
 docker exec -it nuri-backend-app php artisan migrate --seed
+
+# Clear Cache
+docker exec -it nuri-backend-app php artisan config:clear
+docker exec -it nuri-backend-app php artisan cache:clear
+docker exec -it nuri-backend-app php artisan route:clear
+docker exec -it nuri-backend-app php artisan view:clear
+docker exec -it nuri-backend-app php artisan optimize:clear
