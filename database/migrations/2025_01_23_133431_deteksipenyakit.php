@@ -13,7 +13,12 @@ return new class extends Migration
     {
         Schema::create('deteksipenyakit', function (Blueprint $table) {
             $table->id('deteksi_id'); 
-            $table->foreignId('user_id')->constrained()->onDelete('cascade')->nullable(); 
+            $table->unsignedBigInteger('user_id')->nullable(); 
+            $table->foreign('user_id')
+                ->references('user_id')
+                ->on('users')
+                ->onDelete('cascade');
+
             $table->string('bidan_id')->nullable(); 
             $table->string('nama')->nullable(); 
             $table->integer('pregnancies')->nullable(); 
@@ -31,14 +36,14 @@ return new class extends Migration
             $table->integer('heart_rate'); 
             $table->decimal('body_temp', 5, 2)->nullable(); 
 
-        
             // Kolom hasil prediksi
             $table->boolean('diabetes_prediction')->nullable(); 
             $table->boolean('hypertension_prediction')->nullable(); 
             $table->string('maternal_health_prediction')->nullable(); 
-        
+
             $table->timestamps();
         });
+
     }        
 
     /**

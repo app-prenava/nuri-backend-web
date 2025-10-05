@@ -10,7 +10,11 @@ class CreateKickCountersTable extends Migration
     {
         Schema::create('kick_counters', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')
+                ->references('user_id') // pakai PK yang benar di tabel users
+                ->on('users')
+                ->onDelete('cascade');
             $table->integer('kick_count');
             $table->timestamp('recorded_at')->useCurrent();
             $table->timestamps();

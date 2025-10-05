@@ -10,8 +10,11 @@ return new class extends Migration
     {
         Schema::create('pregnancy_calculators', function (Blueprint $table) {
             $table->id();
-            // 🔹 Relasi ke user
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')
+                ->references('user_id') // pakai PK yang benar di tabel users
+                ->on('users')
+                ->onDelete('cascade');
 
             // 🔹 Data kehamilan
             $table->date('hpht')->nullable(); // Hari Pertama Haid Terakhir (nullable)

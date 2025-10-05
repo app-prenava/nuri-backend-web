@@ -10,7 +10,12 @@ return new class extends Migration {
     {
         Schema::create('prediksi_depresi', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->foreign('user_id')
+                ->references('user_id')
+                ->on('users')
+                ->onDelete('cascade');
+
             $table->integer('umur');
             $table->integer('merasa_sedih'); // 0, 1, 2
             $table->integer('mudah_tersinggung'); // 0, 1, 2
@@ -22,11 +27,6 @@ return new class extends Migration {
             $table->boolean('hasil_prediksi')->nullable(); // 0: Tidak Depresi, 1: Depresi
             $table->timestamps();
         });
-    }
-
-    public function epds()
-    {
-        return $this->hasOne(SkorEpds::class, 'prediksi_depresi_id');
     }
 
 
