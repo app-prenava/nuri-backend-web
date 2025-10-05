@@ -3,6 +3,9 @@ DB_HOST=mysql
 DB_USERNAME=nuri
 DB_PORT=3306
 
+# Global command with docker
+docker exec -it nuri-backend-app
+
 # Stop & bersihkan semua container
 docker compose down
 
@@ -24,3 +27,10 @@ docker exec -it nuri-backend-app php artisan cache:clear
 docker exec -it nuri-backend-app php artisan route:clear
 docker exec -it nuri-backend-app php artisan view:clear
 docker exec -it nuri-backend-app php artisan optimize:clear
+
+# Show app key
+docker exec -it nuri-backend-app php artisan key:generate --show
+
+# Show jwt secret
+docker exec -it nuri-backend-app php artisan jwt:secret --show
+
