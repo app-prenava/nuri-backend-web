@@ -14,13 +14,20 @@ return new class extends Migration
         
         Schema::create('saldo', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('admin_id')->constrained('users')->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')
+                ->references('user_id') // pakai PK yang benar di tabel users
+                ->on('users')
+                ->onDelete('cascade');
             $table->decimal('amount', 10, 2);
             $table->enum('type', ['credit', 'debit'])->default('credit');
             $table->string('keterangan')->nullable();
             $table->enum('status', ['active', 'cancelled'])->default('active');
-            $table->foreignId('cancelled_by')->nullable()->constrained('users');
+            $table->unsignedBigInteger('cancelled_by')->nullable();
+            $table->foreign('cancelled_by')
+                ->references('user_id')   // PK yang benar di tabel users
+                ->on('users')
+                ->onDelete('set null');  
             $table->timestamp('cancelled_at')->nullable();
             $table->timestamps();
 

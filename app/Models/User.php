@@ -5,108 +5,74 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-use App\Models\icons;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
 
 class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;
+
     protected $table = 'users';
+    protected $primaryKey = 'user_id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
-        'name', 'email', 'password',
+        'name',
+        'email',
+        'password',
         'role',
-
-        //IBU HAMIL
-        'tanggal_lahir',
-        'usia',
-        'alamat',
-        'nomor_telepon',
-        'pendidikan_terakhir',
-        'pekerjaan',
-        'golongan_darah',
-        'nama_suami',
-        'telepon_suami',
-        'usia_suami',
-        'pekerjaan_suami',
-        'saldo_total',
-        'usia_kehamilan',
-        'selected_icon_id',
-        'selected_icon_name_cache',
-        'selected_icon_data_cache',
-        
-        // BIDAN
-        'nomor_str',
-        'masa_berlaku_str',
-        'nomor_sipb',
-        'masa_berlaku_sipb',
-        'tempat_praktik',
-        'alamat_praktik',
-        'telepon_tempat_praktik',
-        'spesialisasi',
-        'nik',
-        // DINKES
-        'nama_dinas',
-        'alamat_kantor',
-        'website',
-        'logo',
-        'nama_admin',
-        'nip',
-        'jabatan',
-        'foto_ktp',
-        'admin_id'
+        'is_active',
     ];
 
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'email_verified_at' => 'datetime',
     ];
 
-    // Implementasi method dari JWTSubject
+    /**
+     * JWT identifier → pakai user_id, bukan id
+     */
     public function getJWTIdentifier()
     {
-        return $this->getKey();
+        return $this->attributes[$this->primaryKey];
     }
 
-     public function selectedIcon(): BelongsTo 
-    {
-        
-        return $this->belongsTo(Icons::class, 'selected_icon_id', 'id');
-    }
-    
+    /**
+     * Custom claims JWT → kosongkan, karena kita isi manual saat login
+     */
     public function getJWTCustomClaims()
     {
         return [];
     }
 
-    public function hasRole($role)
+    /**
+     * Role checker manual (opsional masih dipakai)
+     */
+    public function hasRole(string $role): bool
     {
         return $this->role === $role;
     }
 
-    /**
-     * Check if user is a bidan
-     * 
-     * @return bool
-     */
-    public function isBidan()
+    public function isBidan(): bool
     {
         return $this->hasRole('bidan');
     }
 
-    /**
-     * Check if user is dinkes staff
-     * 
-     * @return bool
-     */
-    public function isDinkes()
+    public function isDinkes(): bool
     {
         return $this->hasRole('dinkes');
+    }
+
+    /**
+     * Contoh relasi icon kalau memang masih dipakai
+     */
+    public function selectedIcon(): BelongsTo
+    {
+        return $this->belongsTo(Icons::class, 'selected_icon_id', 'id');
     }
 }

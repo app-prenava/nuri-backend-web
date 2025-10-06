@@ -2,47 +2,87 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Admin Dinas Kesehatan
-        User::create([
-            'name' => 'Admin Dinkes',
-            'email' => 'admin@dinkes.go.id',
-            'password' => Hash::make('password123'),
-            'role' => 'dinkes',
-            'alamat' => 'Jl. Kesehatan No. 1',
-            'saldo_total' => 0,
-            'admin_id' => 1,
-        ]);
+        DB::transaction(function () {
+            $now = now();
 
-        // Contoh data ibu hamil
-        User::create([
-            'name' => 'Siti Aminah',
-            'email' => 'siti@example.com',
-            'password' => Hash::make('password123'),
-            'role' => 'ibu_hamil',
-            'tanggal_lahir' => '1995-03-15',
-            'alamat' => 'Jl. Melati No. 10',
-        ]);
+            $adminDinkesId = DB::table('users')->insertGetId([
+                'name'       => 'Admin Dinkes',
+                'email'      => 'admin@dinkes.go.id',
+                'password'   => Hash::make('password123'),
+                'role'       => 'dinkes',
+                'is_active'  => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
 
-        // Jalankan semua seeder lainnya
-        $this->call([
-            IconSeeder::class,
-            KomunitasSeeder::class,
-            PostpartumArticlesSeeder::class,
-            SaranMakananSeeder::class,
-            // WaterIntakeSeeder::class,
-            ProductSeeder::class
-        ]);
+            DB::table('user_dinkes')->insert([
+                'user_id'    => $adminDinkesId,
+                'jabatan'    => 'Admin',
+                'nip'        => '1234567890',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            $ibuHamilId = DB::table('users')->insertGetId([
+                'name'       => 'Siti Aminah',
+                'email'      => 'siti@example.com',
+                'password'   => Hash::make('password123'),
+                'role'       => 'ibu_hamil',
+                'is_active'  => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            DB::table('user_profile')->insert([
+                'user_id'              => $ibuHamilId,
+                'tanggal_lahir'        => '1995-03-15',
+                'alamat'               => 'Jl. Melati No. 10',
+                'usia'                 => 29,
+                'no_telepon'           => null,
+                'pendidikan_terakhir'  => null,
+                'pekerjaan'            => null,
+                'golongan_darah'       => null,
+                'created_at'           => $now,
+                'updated_at'           => $now,
+            ]);
+
+            $bidanId = DB::table('users')->insertGetId([
+                'name'       => 'Bidan Rita',
+                'email'      => 'bidan.rina@example.com',
+                'password'   => Hash::make('password123'),
+                'role'       => 'bidan',
+                'is_active'  => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            DB::table('bidan_profile')->insert([
+                'user_id'                   => $bidanId,
+                'tempat_praktik'            => 'Klinik Sehati',
+                'alamat_praktik'            => 'Jl. Mawar No. 5',
+                'kota_tempat_praktik'       => 'Bandung',
+                'kecamatan_tempat_praktik'  => 'Coblong',
+                'telepon_tempat_praktik'    => '081234567890',
+                'spesialisasi'              => 'Kebidanan Umum',
+                'created_at'                => $now,
+                'updated_at'                => $now,
+            ]);
+
+            $this->call([
+                IconSeeder::class,
+                KomunitasSeeder::class,
+                PostpartumArticlesSeeder::class,
+                SaranMakananSeeder::class,
+                ProductSeeder::class,
+            ]);
+        });
     }
 }

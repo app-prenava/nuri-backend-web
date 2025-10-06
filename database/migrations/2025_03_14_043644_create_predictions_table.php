@@ -11,9 +11,11 @@ return new class extends Migration {
             $table->id();
 
             // 🔐 Relasi wajib ke tabel users
-            $table->foreignId('user_id')
-                  ->constrained('users')
-                  ->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')
+                ->references('user_id')   // karena PK di tabel users adalah user_id
+                ->on('users')
+                ->onDelete('cascade');
 
             // 🧠 Input untuk prediksi
             $table->integer('usia_ibu');

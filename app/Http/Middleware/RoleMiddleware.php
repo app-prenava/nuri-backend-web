@@ -4,30 +4,36 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class RoleMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  string  ...$roles
-     * @return mixed
-     */
     public function handle(Request $request, Closure $next, ...$roles)
     {
-        $user = Auth::user();
+        try {
+            $payload = JWTAuth::parseToken()->getPayload();
+            $role = strtolower((string) $payload->get('role'));
+        } catch (TokenExpiredException $e) {
+            return response()->json(['status'=>'error','message'=>'Token has expired.'], 401);
+        } catch (TokenInvalidException $e) {
+            return response()->json(['status'=>'error','message'=>'Token is invalid.'], 401);
+        } catch (JWTException $e) {
+            return response()->json(['status'=>'error','message'=>'Unable to parse token.'], 401);
+        } catch (\Throwable $e) {
+            return response()->json(['status'=>'error','message'=>'Invalid or missing token.'], 401);
+        }
 
-        if (!$user || !in_array($user->role, $roles)) {
-            // Jika request ingin JSON (misalnya API)
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Unauthorized.'], 403);
-            }
+        // normalisasi roles dari parameter
+        $roles = array_map(static fn($r) => strtolower(trim($r)), $roles);
 
-            // Kalau tidak, redirect ke halaman tertentu (misalnya login)
-            return redirect()->route('login')->with('error', 'Anda tidak memiliki akses.');
+        if (!in_array($role, $roles, true)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Access denied: role not permitted.',
+            ], 403);
         }
 
         return $next($request);
