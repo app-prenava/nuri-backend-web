@@ -6,17 +6,10 @@ use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthTest extends TestCase
 {
     use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->artisan('migrate:fresh');
-    }
 
     public function test_login_succeeds_for_active_user(): void
     {
@@ -41,17 +34,6 @@ class AuthTest extends TestCase
         ]);
     }
 
-    private function issueToken(User $user): string
-    {
-        return JWTAuth::claims([
-            'uid'   => $user->user_id,
-            'role'  => $user->role,
-            'name'  => $user->name,
-            'email' => $user->email,
-            'tv'    => (int) $user->token_version,
-        ])->fromUser($user);
-    }
-
     public function test_me_returns_user_with_valid_token(): void
     {
         $user = User::create([
@@ -66,9 +48,7 @@ class AuthTest extends TestCase
         $loginResponse = $this->postJson('/api/auth/login', [
             'email'    => 'test@ex.com',
             'password' => 'password123',
-        ], [
-            'Accept' => 'application/json',
-        ]);
+        ], ['Accept' => 'application/json']);
 
         $loginResponse->assertStatus(200)->assertJsonStructure([
             'authorization' => ['token'],
@@ -79,9 +59,7 @@ class AuthTest extends TestCase
         $this->getJson('/api/auth/me', [
             'Authorization' => "Bearer {$token}",
             'Accept'        => 'application/json',
-        ])
-        ->assertOk()
-        ->assertJson([
+        ])->assertOk()->assertJson([
             'user_id' => $user->user_id,
             'name'    => $user->name,
             'email'   => $user->email,

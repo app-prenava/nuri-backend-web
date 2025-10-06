@@ -34,3 +34,5 @@ docker exec -it nuri-backend-app php artisan key:generate --show
 # Show jwt secret
 docker exec -it nuri-backend-app php artisan jwt:secret --show
 
+# Run unit test
+php artisan test --env=testing
