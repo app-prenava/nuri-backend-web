@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
-
-
+use Illuminate\Support\Facades\DB;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
@@ -142,6 +144,45 @@ class AuthController extends Controller
         $user = User::select('user_id','name','email','role')->find($uid);
 
         return response()->json($user);
+    }
+
+    public function change(Request $request): JsonResponse
+    {
+        try {
+            $token   = JWTAuth::parseToken()->getToken();
+            $payload = JWTAuth::setToken($token)->getPayload();
+            $uid     = (int) $payload->get('uid');
+        } catch (TokenExpiredException $e) {
+            abort(response()->json(['status'=>'error','message'=>'Token has expired.'], 401));
+        } catch (TokenInvalidException $e) {
+            abort(response()->json(['status'=>'error','message'=>'Token is invalid.'], 401));
+        } catch (JWTException $e) {
+            abort(response()->json(['status'=>'error','message'=>'Unable to parse token.'], 401));
+        } catch (\Throwable $e) {
+            abort(response()->json(['status'=>'error','message'=>'Invalid or missing token.'], 401));
+        }
+
+        $data = $request->validate([
+            'new_password' => ['required','string','min:6'],
+        ]);
+
+        $user = DB::table('users')->where('user_id', $uid)->first();
+        if (! $user) {
+            return response()->json(['status'=>'error','message'=>'User not found.'], 404);
+        }
+
+        DB::table('users')
+            ->where('user_id', $uid)
+            ->update([
+                'password'      => Hash::make($data['new_password']),
+                'token_version' => DB::raw('token_version + 1'),
+                'updated_at'    => now(),
+            ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Password changed. Previous tokens revoked.',
+        ], 200);
     }
 
     private function makeToken(User $user): string
