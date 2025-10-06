@@ -34,8 +34,5 @@ docker exec -it nuri-backend-app php artisan key:generate --show
 # Show jwt secret
 docker exec -it nuri-backend-app php artisan jwt:secret --show
 
-# Run unit test spesific
-docker exec -e APP_ENV=testing \
-           -e DB_CONNECTION=sqlite \
-           -e DB_DATABASE=/app/database/database.sqlite \
-           -it nuri-backend-app php artisan test --filter=ChangePasswordTest
+# Run unit test
+php artisan test --env=testing
