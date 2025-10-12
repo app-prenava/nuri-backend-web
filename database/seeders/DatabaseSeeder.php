@@ -13,9 +13,19 @@ class DatabaseSeeder extends Seeder
         DB::transaction(function () {
             $now = now();
 
+            DB::table('users')->insert([
+                'name'       => 'Admin Prenava',
+                'email'      => 'admin@prenava.com',
+                'password'   => Hash::make('password123'),
+                'role'       => 'admin',
+                'is_active'  => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
             $adminDinkesId = DB::table('users')->insertGetId([
                 'name'       => 'Admin Dinkes',
-                'email'      => 'admin@dinkes.go.id',
+                'email'      => 'dinkes@prenava.com',
                 'password'   => Hash::make('password123'),
                 'role'       => 'dinkes',
                 'is_active'  => true,
@@ -25,15 +35,15 @@ class DatabaseSeeder extends Seeder
 
             DB::table('user_dinkes')->insert([
                 'user_id'    => $adminDinkesId,
-                'jabatan'    => 'Admin',
+                'jabatan'    => 'Keuangan',
                 'nip'        => '1234567890',
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
 
             $ibuHamilId = DB::table('users')->insertGetId([
-                'name'       => 'Siti Aminah',
-                'email'      => 'siti@example.com',
+                'name'       => 'User Hamil',
+                'email'      => 'hamil@prenava.com',
                 'password'   => Hash::make('password123'),
                 'role'       => 'ibu_hamil',
                 'is_active'  => true,
@@ -56,7 +66,7 @@ class DatabaseSeeder extends Seeder
 
             $bidanId = DB::table('users')->insertGetId([
                 'name'       => 'Bidan Rita',
-                'email'      => 'bidan.rina@example.com',
+                'email'      => 'bidan.rita@prenava.com',
                 'password'   => Hash::make('password123'),
                 'role'       => 'bidan',
                 'is_active'  => true,
