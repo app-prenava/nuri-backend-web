@@ -21,6 +21,9 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AddProfileController;
 use App\Http\Controllers\AdminAccountController;
 use App\Http\Controllers\AdminUserStatusController;
+use App\Http\Controllers\RecomendationSportController;
+use App\Http\Controllers\PregnancyController;
+
 
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +49,8 @@ Route::post('/admin/create/account/bidan',  [AdminAccountController::class, 'cre
 Route::post('/admin/create/account/dinkes', [AdminAccountController::class, 'createDinkes']);
 Route::post('/admin/users/{userId}/reset-password', [AdminAccountController::class, 'reset']);
 
+Route::post('/pregnancies/create', [PregnancyController::class, 'create']);
+Route::post('/recomendation/sports', [RecomendationSportController::class, 'create']);
 
 Route::post('/admin/users/{userId}/deactivate', [AdminUserStatusController::class, 'deactivate']);
 Route::post('/admin/users/{userId}/activate',   [AdminUserStatusController::class, 'activate']);
