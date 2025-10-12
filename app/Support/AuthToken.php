@@ -13,8 +13,12 @@ final class AuthToken
 {
     public static function payloadOrFail(Request $request)
     {
+        if ($request->attributes->has('auth.payload')) {
+            return $request->attributes->get('auth.payload');
+        }
+
         try {
-            $token = \Tymon\JWTAuth\Facades\JWTAuth::getToken();
+            $token = JWTAuth::getToken();
 
             if (!$token) {
                 $authHeader = $request->header('Authorization') ?: $request->server('HTTP_AUTHORIZATION');
@@ -27,7 +31,9 @@ final class AuthToken
                 abort(response()->json(['status'=>'error','message'=>'Missing Authorization: Bearer <token> header.'], 401));
             }
 
-            return \Tymon\JWTAuth\Facades\JWTAuth::setToken($token)->getPayload();
+            $payload = JWTAuth::setToken($token)->getPayload();
+            $request->attributes->set('auth.payload', $payload);
+            return $payload;
 
         } catch (TokenExpiredException $e) {
             abort(response()->json(['status'=>'error','message'=>'Token has expired.'], 401));
@@ -42,20 +48,31 @@ final class AuthToken
 
     public static function uidRoleOrFail(Request $request): array
     {
+        if ($request->attributes->has('auth.claims')) {
+            return $request->attributes->get('auth.claims');
+        }
+
         JWTAuth::parseToken()->getToken();
-        
-        $p = self::payloadOrFail($request);
+
+        $p    = self::payloadOrFail($request);
         $uid  = (int) $p->get('uid');
         $role = strtolower((string) $p->get('role'));
 
         if (!$uid || !$role) {
             abort(response()->json(['status'=>'error','message'=>'Token missing required claims (uid/role).'], 401));
         }
-        return [$uid, $role, $p];
+
+        $claims = [$uid, $role, $p];
+        $request->attributes->set('auth.claims', $claims);
+        return $claims;
     }
 
     public static function ensureActiveAndFreshOrFail(Request $request): array
     {
+        if ($request->attributes->has('auth.user_state')) {
+            return $request->attributes->get('auth.user_state');
+        }
+
         [$uid, $role, $payload] = self::uidRoleOrFail($request);
         $tv = (int) $payload->get('tv');
 
@@ -68,6 +85,33 @@ final class AuthToken
             abort(response()->json(['status'=>'error','message'=>'Token revoked or account deactivated.'], 401));
         }
 
-        return [$uid, $role, $payload];
+        $triple = [$uid, $role, $payload];
+        $request->attributes->set('auth.user_state', $triple);
+        return $triple;
     }
+
+    public static function assertRole(Request $r, string $must): array
+    {
+        [$uid, $role, $p] = self::uidRoleOrFail($r);
+        if ($role !== strtolower($must)) {
+            abort(response()->json([
+                'status'  => 'error',
+                'message' => 'Access denied: invalid role.',
+            ], 403));
+        }
+        return [$uid, $role, $p];
+    }
+
+    public static function assertRoleFresh(Request $r, string $must): array
+    {
+        [$uid, $role, $p] = self::ensureActiveAndFreshOrFail($r);
+        if ($role !== strtolower($must)) {
+            abort(response()->json([
+                'status'  => 'error',
+                'message' => 'Access denied: invalid role.',
+            ], 403));
+        }
+        return [$uid, $role, $p];
+    }
+
 }
