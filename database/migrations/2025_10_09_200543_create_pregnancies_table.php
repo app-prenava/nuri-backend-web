@@ -15,7 +15,7 @@ return new class extends Migration
             $t->id('pregnancy_id');
             $t->unsignedBigInteger('user_id');
             $t->date('lmp_date')->nullable();
-            $t->date('edd')->nullable();
+            $t->integer('gestational_age_weeks')->nullable();
             $t->enum('status', ['planned','ongoing','postpartum'])->default('ongoing');
             $t->boolean('multiple_gestation')->default(false);
             $t->timestamps();

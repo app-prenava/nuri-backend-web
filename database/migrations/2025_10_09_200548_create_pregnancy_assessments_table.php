@@ -15,19 +15,20 @@ return new class extends Migration
             $t->id('assessment_id');
             $t->unsignedBigInteger('pregnancy_id');
 
-            $t->unsignedTinyInteger('pre_pregnancy_activity_level')->default(0);
             $t->decimal('bmi', 4, 1)->nullable();
-
             $t->boolean('hypertension')->default(false);
+            $t->boolean('is_diabetes')->default(false);
             $t->boolean('gestational_diabetes')->default(false);
-            $t->boolean('placenta_previa')->default(false);
-            $t->boolean('pre_eclampsia')->default(false);
-            $t->boolean('back_pain')->default(false);
+            $t->boolean('is_fever')->default(false);
+            $t->boolean('is_high_heart_rate')->default(false);
+            $t->boolean('previous_complications')->default(false);
+            $t->boolean('mental_health_issue')->default(false);
 
+            $t->boolean('back_pain')->default(false);
             $t->boolean('low_impact_pref')->default(true);
             $t->boolean('water_access')->default(false);
+            $t->boolean('placenta_previa')->default(false);
 
-            $t->unsignedTinyInteger('gestational_age_weeks')->nullable();
             $t->timestamps();
 
             $t->foreign('pregnancy_id')->references('pregnancy_id')->on('pregnancies')->onDelete('cascade');
