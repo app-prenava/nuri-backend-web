@@ -10,6 +10,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use App\Support\AuthToken;
 
 class AddProfileController extends Controller
 {
@@ -316,6 +317,43 @@ class AddProfileController extends Controller
         return $rows > 0
             ? response()->json(['status'=>'success','message'=>'Profile kamu berhasil diupdate'])
             : $this->notFound('Profile not found.');
+    }
+
+    public function show(Request $request)
+    {
+        [$uid, $role] = AuthToken::assertRoleFresh($request, ['ibu_hamil','bidan','dinkes']);
+
+        switch ($role) {
+            case 'ibu_hamil':
+                $profile = DB::table('user_profile')
+                    ->where('user_id', $uid)
+                    ->first();
+                break;
+
+            case 'bidan':
+                $profile = DB::table('bidan_profile')
+                    ->where('user_id', $uid)
+                    ->first();
+                break;
+
+            case 'dinkes':
+                $profile = DB::table('user_dinkes')
+                    ->where('user_id', $uid)
+                    ->first();
+                break;
+        }
+
+        if (! $profile) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data profile tidak ditemukan, segera tambahkan data profile',
+            ], 404);
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'profile' => $profile,
+        ]);
     }
 
     protected function onlyNotNull(array $data): array
