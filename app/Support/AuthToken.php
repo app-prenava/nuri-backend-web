@@ -90,28 +90,39 @@ final class AuthToken
         return $triple;
     }
 
-    public static function assertRole(Request $r, string $must): array
+    public static function assertRole(Request $r, $must): array
     {
         [$uid, $role, $p] = self::uidRoleOrFail($r);
-        if ($role !== strtolower($must)) {
+
+        $allowed = is_array($must) ? $must : [$must];
+        $allowed = array_map('strtolower', $allowed);
+
+        if (!in_array($role, $allowed, true)) {
             abort(response()->json([
                 'status'  => 'error',
                 'message' => 'Access denied: invalid role.',
             ], 403));
         }
+
         return [$uid, $role, $p];
     }
 
-    public static function assertRoleFresh(Request $r, string $must): array
+    public static function assertRoleFresh(Request $r, $must): array
     {
         [$uid, $role, $p] = self::ensureActiveAndFreshOrFail($r);
-        if ($role !== strtolower($must)) {
+
+        $allowed = is_array($must) ? $must : [$must];
+        $allowed = array_map('strtolower', $allowed);
+
+        if (!in_array($role, $allowed, true)) {
             abort(response()->json([
                 'status'  => 'error',
                 'message' => 'Access denied: invalid role.',
             ], 403));
         }
+
         return [$uid, $role, $p];
     }
+
 
 }
