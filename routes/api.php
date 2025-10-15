@@ -55,6 +55,9 @@ Route::post('/recomendation/sports', [RecomendationSportController::class, 'crea
 Route::post('/admin/users/{userId}/deactivate', [AdminUserStatusController::class, 'deactivate']);
 Route::post('/admin/users/{userId}/activate',   [AdminUserStatusController::class, 'activate']);
 
+Route::get('/profile', [AddProfileController::class, 'show']);
+
+
 // Semua route terproteksi
 Route::group(['middleware' => 'auth:api'], function () {
 
