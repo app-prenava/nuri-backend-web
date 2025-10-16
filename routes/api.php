@@ -23,6 +23,8 @@ use App\Http\Controllers\AdminAccountController;
 use App\Http\Controllers\AdminUserStatusController;
 use App\Http\Controllers\RecomendationSportController;
 use App\Http\Controllers\PregnancyController;
+use App\Http\Controllers\BannerController;
+
 
 
 use Illuminate\Support\Facades\Route;
@@ -43,6 +45,8 @@ Route::prefix('auth')->group(function () {
 
 Route::post('/profile', [AddProfileController::class, 'create']);
 Route::put('/profile',  [AddProfileController::class, 'update']);
+Route::get('/profile', action: [AddProfileController::class, 'show']);
+
 
 Route::get('/admin/users', [AdminAccountController::class, 'allUser']);
 Route::post('/admin/create/account/bidan',  [AdminAccountController::class, 'createBidan']);
@@ -55,7 +59,13 @@ Route::post('/recomendation/sports', [RecomendationSportController::class, 'crea
 Route::post('/admin/users/{userId}/deactivate', [AdminUserStatusController::class, 'deactivate']);
 Route::post('/admin/users/{userId}/activate',   [AdminUserStatusController::class, 'activate']);
 
-Route::get('/profile', [AddProfileController::class, 'show']);
+Route::post('/banner/create', [BannerController::class, 'create']);
+Route::post('/banner/update/{id}', [BannerController::class, 'update']);
+Route::delete('/banner/delete/{id}', [BannerController::class, 'delete']);
+
+Route::get('/banner/show/production', [BannerController::class, 'ShowOnProd']);
+Route::get('/banner/show/all', [BannerController::class, 'ShowAll']);
+
 
 
 // Semua route terproteksi
