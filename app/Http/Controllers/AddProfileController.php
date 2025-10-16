@@ -11,6 +11,7 @@ use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Support\AuthToken;
+use Illuminate\Support\Facades\Storage;
 
 class AddProfileController extends Controller
 {
@@ -107,76 +108,99 @@ class AddProfileController extends Controller
             'kecamatan_tempat_praktik' => ['required','string','max:255'],
             'telepon_tempat_praktik'   => ['nullable','string','max:32'],
             'spesialisasi'             => ['nullable','string','max:255'],
+            'photo'                    => ['sometimes','file','image','mimes:jpg,jpeg,png,webp','max:500'],
+        ], [
+            'photo.image' => 'File harus berupa foto',
+            'photo.mimes' => 'File harus berupa foto',
+            'photo.max'   => 'Ukuran file melebihi batas upload, pastikan file dibawah 500KB',
         ]);
         if ($v->fails()) return $this->validationFail($v->errors());
 
         if ($this->profileExists('bidan_profile', $uid)) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Profile already exists.',
-            ], 409);
+            return response()->json(['status'=>'error','message'=>'Profile already exists.'], 409);
         }
 
-        try {
-            DB::table('bidan_profile')->insert([
-                'user_id'                   => $uid,
-                'tempat_praktik'            => $req->tempat_praktik,
-                'alamat_praktik'            => $req->alamat_praktik,
-                'kota_tempat_praktik'       => $req->kota_tempat_praktik,
-                'kecamatan_tempat_praktik'  => $req->kecamatan_tempat_praktik,
-                'telepon_tempat_praktik'    => $req->telepon_tempat_praktik,
-                'spesialisasi'              => $req->spesialisasi,
-                'created_at'                => now(),
-                'updated_at'                => now(),
-            ]);
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
-                return $this->conflict('Profile already exists.');
-            }
-            throw $e;
+        $path = null;
+        if ($req->hasFile('photo')) {
+            $path = $req->file('photo')->store('profiles/bidan', 'public');
         }
+
+        DB::table('bidan_profile')->insert([
+            'user_id'                   => $uid,
+            'tempat_praktik'            => $req->tempat_praktik,
+            'alamat_praktik'            => $req->alamat_praktik,
+            'kota_tempat_praktik'       => $req->kota_tempat_praktik,
+            'kecamatan_tempat_praktik'  => $req->kecamatan_tempat_praktik,
+            'telepon_tempat_praktik'    => $req->telepon_tempat_praktik,
+            'spesialisasi'              => $req->spesialisasi,
+            'photo'                     => $path,
+            'created_at'                => now(),
+            'updated_at'                => now(),
+        ]);
+
+        $photoUrl = $path ? asset('storage/' . $path) : null;
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Profile kamu berhasil dibuat',
+            'message' => 'Profile kamu berhasil ditambahkan',
+            'data'    => [
+            'tempat_praktik'            => $req->tempat_praktik,
+            'alamat_praktik'            => $req->alamat_praktik,
+            'kota_tempat_praktik'       => $req->kota_tempat_praktik,
+            'kecamatan_tempat_praktik'  => $req->kecamatan_tempat_praktik,
+            'telepon_tempat_praktik'    => $req->telepon_tempat_praktik,
+            'spesialisasi'              => $req->spesialisasi,
+            'photo'                     => $photoUrl,
+            ],
         ], 201);
     }
+
 
     protected function createDinkes(Request $req, int $uid): JsonResponse
     {
         $v = Validator::make($req->all(), [
             'jabatan' => ['required','string','max:255'],
             'nip'     => ['required','string','max:64'],
+            'photo'   => ['sometimes','file','image','mimes:jpg,jpeg,png,webp','max:500'],
+        ], [
+            'photo.image' => 'File harus berupa foto',
+            'photo.mimes' => 'File harus berupa foto',
+            'photo.max'   => 'Ukuran file melebihi batas upload, pastikan file dibawah 500KB',
         ]);
         if ($v->fails()) return $this->validationFail($v->errors());
-        
+
         if ($this->profileExists('user_dinkes', $uid)) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Profile already exists.',
-            ], 409);
+            return response()->json(['status'=>'error','message'=>'Profile already exists.'], 409);
         }
 
-        try {
-            DB::table('user_dinkes')->insert([
-                'user_id'    => $uid,
-                'jabatan'    => $req->jabatan,
-                'nip'        => $req->nip,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
-                return $this->conflict('Profile already exists.');
-            }
-            throw $e;
+        $path = null;
+        if ($req->hasFile('photo')) {
+            $path = $req->file('photo')->store('profiles/dinkes', 'public');
         }
+
+        DB::table('user_dinkes')->insert([
+            'user_id'    => $uid,
+            'jabatan'    => $req->jabatan,
+            'nip'        => $req->nip,
+            'photo'      => $path,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $photoUrl = $path ? asset('storage/' . $path) : null;
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Akun dinkes berhasil dibuat',
+            'message' => 'Profile kamu berhasil ditambahkan',
+            'data'    => [
+                'jabatan'    => $req->jabatan,
+                'nip'        => $req->nip,
+                'photo'      => $photoUrl,
+            ],
         ], 201);
+
     }
+
 
     protected function createIbuHamil(Request $req, int $uid): JsonResponse
     {
@@ -188,20 +212,43 @@ class AddProfileController extends Controller
             'pendidikan_terakhir' => ['nullable','string','max:255'],
             'pekerjaan'           => ['nullable','string','max:255'],
             'golongan_darah'      => ['nullable','string','max:3'],
+            'photo'               => ['sometimes','file','image','mimes:jpg,jpeg,png,webp','max:500'],
+        ], [
+            'photo.image' => 'File harus berupa foto',
+            'photo.mimes' => 'File harus berupa foto',
+            'photo.max'   => 'Ukuran file melebihi batas upload, pastikan file dibawah 500KB',
         ]);
         if ($v->fails()) return $this->validationFail($v->errors());
 
-
         if ($this->profileExists('user_profile', $uid)) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Profile already exists.',
-            ], 409);
+            return response()->json(['status'=>'error','message'=>'Profile already exists.'], 409);
         }
 
-        try {
-            DB::table('user_profile')->insert([
-                'user_id'             => $uid,
+        $path = null;
+        if ($req->hasFile('photo')) {
+            $path = $req->file('photo')->store('profiles/ibu', 'public');
+        }
+
+        DB::table('user_profile')->insert([
+            'user_id'             => $uid,
+            'tanggal_lahir'       => $req->tanggal_lahir,
+            'usia'                => $req->usia,
+            'alamat'              => $req->alamat,
+            'no_telepon'          => $req->no_telepon,
+            'pendidikan_terakhir' => $req->pendidikan_terakhir,
+            'pekerjaan'           => $req->pekerjaan,
+            'golongan_darah'      => $req->golongan_darah,
+            'photo'               => $path,
+            'created_at'          => now(),
+            'updated_at'          => now(),
+        ]);
+        
+        $photoUrl = $path ? asset('storage/' . $path) : null;
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Profile kamu berhasil ditambahkan',
+            'data'    => [
                 'tanggal_lahir'       => $req->tanggal_lahir,
                 'usia'                => $req->usia,
                 'alamat'              => $req->alamat,
@@ -209,30 +256,12 @@ class AddProfileController extends Controller
                 'pendidikan_terakhir' => $req->pendidikan_terakhir,
                 'pekerjaan'           => $req->pekerjaan,
                 'golongan_darah'      => $req->golongan_darah,
-                'created_at'          => now(),
-                'updated_at'          => now(),
-            ]);
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
-                return $this->conflict('Profile already exists.');
-            }
-            throw $e;
-        }
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Profile kamu berhasil ditambahkan',
-            'data'    => $req->only([
-                'tanggal_lahir',
-                'usia',
-                'alamat',
-                'no_telepon',
-                'pendidikan_terakhir',
-                'pekerjaan',
-                'golongan_darah'
-            ]),
+                'photo'               => $photoUrl,
+            ],
         ], 201);
+
     }
+
 
     protected function updateBidan(Request $req, int $uid): JsonResponse
     {
@@ -243,50 +272,75 @@ class AddProfileController extends Controller
             'kecamatan_tempat_praktik' => ['sometimes','required','string','max:255'],
             'telepon_tempat_praktik'   => ['nullable','string','max:32'],
             'spesialisasi'             => ['nullable','string','max:255'],
+            'photo'                    => ['sometimes','file','image','mimes:jpg,jpeg,png,webp','max:500'],
+        ], [
+            'photo.image' => 'File harus berupa foto',
+            'photo.mimes' => 'File harus berupa foto',
+            'photo.max'   => 'Ukuran file melebihi batas upload, pastikan file dibawah 500KB',
         ]);
         if ($v->fails()) return $this->validationFail($v->errors());
 
-        if (!$this->profileExists('bidan_profile', $uid)) {
-            return $this->notFound('Profile not found.');
-        }
+        $existing = DB::table('bidan_profile')->where('user_id', $uid)->first();
+        if (! $existing) return $this->notFound('Profile not found.');
 
         $data = $this->onlyNotNull($req->only([
             'tempat_praktik','alamat_praktik','kota_tempat_praktik',
             'kecamatan_tempat_praktik','telepon_tempat_praktik','spesialisasi'
         ]));
-        if (!$data) return $this->badRequest('No fields to update.');
 
+        if ($req->hasFile('photo')) {
+            $newPath = $req->file('photo')->store('profiles/bidan', 'public');
+            $data['photo'] = $newPath;
+
+            if (!empty($existing->photo) && Storage::disk('public')->exists($existing->photo)) {
+                Storage::disk('public')->delete($existing->photo);
+            }
+        }
+
+        if (!$data) return $this->badRequest('No fields to update.');
         $data['updated_at'] = now();
 
-        $rows = DB::table('bidan_profile')->where('user_id', $uid)->update($data);
+        DB::table('bidan_profile')->where('user_id', $uid)->update($data);
 
-        return $rows > 0
-            ? response()->json(['status'=>'success','message'=>'Profile kamu berhasil diupdate'])
-            : $this->notFound('Profile not found.');
+        return response()->json(['status'=>'success','message'=>'Profile kamu berhasil diupdate']);
     }
+
 
     protected function updateDinkes(Request $req, int $uid): JsonResponse
     {
         $v = Validator::make($req->all(), [
             'jabatan' => ['sometimes','required','string','max:255'],
             'nip'     => ['sometimes','required','string','max:64'],
+            'photo'   => ['sometimes','file','image','mimes:jpg,jpeg,png,webp','max:500'],
+        ], [
+            'photo.image' => 'File harus berupa foto',
+            'photo.mimes' => 'File harus berupa foto',
+            'photo.max'   => 'Ukuran file melebihi batas upload, pastikan file dibawah 500KB',
         ]);
         if ($v->fails()) return $this->validationFail($v->errors());
 
-        if (!$this->profileExists('user_dinkes', $uid)) {
-            return $this->notFound('Profile not found.');
-        }
+        $existing = DB::table('user_dinkes')->where('user_id', $uid)->first();
+        if (! $existing) return $this->notFound('Profile not found.');
 
         $data = $this->onlyNotNull($req->only(['jabatan','nip']));
+
+        if ($req->hasFile('photo')) {
+            $newPath = $req->file('photo')->store('profiles/dinkes', 'public');
+            $data['photo'] = $newPath;
+
+            if (!empty($existing->photo) && Storage::disk('public')->exists($existing->photo)) {
+                Storage::disk('public')->delete($existing->photo);
+            }
+        }
+
         if (!$data) return $this->badRequest('No fields to update.');
         $data['updated_at'] = now();
 
-        $rows = DB::table('user_dinkes')->where('user_id', $uid)->update($data);
+        DB::table('user_dinkes')->where('user_id', $uid)->update($data);
 
-        return $rows > 0
-            ? response()->json(['status'=>'success','message'=>'Akun kamu berhasil diupdate'])
-            : $this->notFound('Profile not found.');
+        return response()->json(['status'=>'success','message'=>'Akun kamu berhasil diupdate']);
     }
+
 
     protected function updateIbuHamil(Request $req, int $uid): JsonResponse
     {
@@ -298,26 +352,41 @@ class AddProfileController extends Controller
             'pendidikan_terakhir' => ['nullable','string','max:255'],
             'pekerjaan'           => ['nullable','string','max:255'],
             'golongan_darah'      => ['nullable','string','max:3'],
+            'photo'               => ['sometimes','file','image','mimes:jpg,jpeg,png,webp','max:500'],
+        ], [
+            'photo.image' => 'File harus berupa foto',
+            'photo.mimes' => 'File harus berupa foto',
+            'photo.max'   => 'Ukuran file melebihi batas upload, pastikan file dibawah 500KB',
         ]);
         if ($v->fails()) return $this->validationFail($v->errors());
 
-        if (!$this->profileExists('user_profile', $uid)) {
-            return $this->notFound('Profile not found.');
-        }
+        $existing = DB::table('user_profile')->where('user_id', $uid)->first();
+        if (! $existing) return $this->notFound('Profile not found.');
 
         $data = $this->onlyNotNull($req->only([
             'tanggal_lahir','usia','alamat','no_telepon',
             'pendidikan_terakhir','pekerjaan','golongan_darah'
         ]));
+
+        if ($req->hasFile('photo')) {
+            $newPath = $req->file('photo')->store('profiles/ibu', 'public');
+            $data['photo'] = $newPath;
+
+            if (!empty($existing->photo) && Storage::disk('public')->exists($existing->photo)) {
+                Storage::disk('public')->delete($existing->photo);
+            }
+        }
+
         if (!$data) return $this->badRequest('No fields to update.');
         $data['updated_at'] = now();
 
-        $rows = DB::table('user_profile')->where('user_id', $uid)->update($data);
+        DB::table('user_profile')->where('user_id', $uid)->update($data);
 
-        return $rows > 0
-            ? response()->json(['status'=>'success','message'=>'Profile kamu berhasil diupdate'])
-            : $this->notFound('Profile not found.');
+
+        return response()->json(['status'=>'success','message'=>'Profile kamu berhasil diupdate']);
+        
     }
+
 
     public function show(Request $request)
     {
@@ -348,6 +417,11 @@ class AddProfileController extends Controller
                 'status'  => 'error',
                 'message' => 'Data profile tidak ditemukan, segera tambahkan data profile',
             ], 404);
+        }
+
+        
+        if (!empty($profile->photo)) {
+            $profile->photo = Storage::disk('public')->url($profile->photo);
         }
 
         return response()->json([

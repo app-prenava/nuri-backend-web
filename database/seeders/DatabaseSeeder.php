@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
 
             DB::table('user_dinkes')->insert([
                 'user_id'    => $adminDinkesId,
+                'photo'      => 'profile/photo.jpg',
                 'jabatan'    => 'Keuangan',
                 'nip'        => '1234567890',
                 'created_at' => $now,
@@ -53,6 +54,7 @@ class DatabaseSeeder extends Seeder
 
             DB::table('user_profile')->insert([
                 'user_id'              => $ibuHamilId,
+                'photo'                => 'profile/photo.jpg',
                 'tanggal_lahir'        => '1995-03-15',
                 'alamat'               => 'Jl. Melati No. 10',
                 'usia'                 => 29,
@@ -76,6 +78,7 @@ class DatabaseSeeder extends Seeder
 
             DB::table('bidan_profile')->insert([
                 'user_id'                   => $bidanId,
+                'photo'                     => 'profile/photo.jpg',
                 'tempat_praktik'            => 'Klinik Sehati',
                 'alamat_praktik'            => 'Jl. Mawar No. 5',
                 'kota_tempat_praktik'       => 'Bandung',
