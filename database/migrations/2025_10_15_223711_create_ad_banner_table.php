@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('ad_banner', function (Blueprint $table) {
             $table->id();
             $table->string('name', 255);
-            $table->string('photo', 255); // path file
+            $table->string('photo', 255);
             $table->boolean('is_active')->default(true);
             $table->string('url', 2048);
             $table->timestamps();

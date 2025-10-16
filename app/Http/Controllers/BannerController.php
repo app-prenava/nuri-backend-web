@@ -40,9 +40,16 @@ class BannerController extends Controller
             'updated_at' => now(),
         ]);
 
+        $photoUrl = $path ? asset('storage/' . $path) : null;
+
         return response()->json([
             'status'  => 'success',
-            'message' => 'Data banner berhasil ditambahkan',
+            'message' => 'Banner berhasil ditambahkan',
+            'data'    => [
+                'name'       => $data['name'],
+                'is_active'  => isset($data['is_active']) ? (bool)$data['is_active'] : true,
+                'photo'      => $photoUrl,
+            ],
         ], 201);
     }
 
