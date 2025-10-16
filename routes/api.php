@@ -43,8 +43,8 @@ Route::prefix('auth')->group(function () {
     Route::put('change-password', [AuthController::class, 'change']);
 });
 
-Route::post('/profile', [AddProfileController::class, 'create']);
-Route::put('/profile',  [AddProfileController::class, 'update']);
+Route::post('/profile/create', [AddProfileController::class, 'create']);
+Route::post('/profile/update',  [AddProfileController::class, 'update']);
 Route::get('/profile', action: [AddProfileController::class, 'show']);
 
 
