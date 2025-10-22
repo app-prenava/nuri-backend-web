@@ -129,7 +129,7 @@ class BannerController extends Controller
 
     public function ShowOnProd(Request $request): JsonResponse
     {
-        [,$role] = AuthToken::assertRoleFresh($request, 'admin');
+        [,$role] = AuthToken::assertRoleFresh($request, ['ibu_hamil','admin']);
 
         $rows = DB::table('ad_banner')
             ->where('is_active', true)
@@ -145,7 +145,7 @@ class BannerController extends Controller
 
     public function ShowAll(Request $request): JsonResponse
     {
-        [,$role] = AuthToken::assertRoleFresh($request, 'admin');
+        [,$role] = AuthToken::assertRoleFresh($request, ['ibu_hamil','admin']);
 
         $rows = DB::table('ad_banner')
             ->orderByDesc('created_at')
