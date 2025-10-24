@@ -24,6 +24,7 @@ use App\Http\Controllers\AdminUserStatusController;
 use App\Http\Controllers\RecomendationSportController;
 use App\Http\Controllers\PregnancyController;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\ShopController;
 
 
 
@@ -52,6 +53,13 @@ Route::get('/admin/users', [AdminAccountController::class, 'allUser']);
 Route::post('/admin/create/account/bidan',  [AdminAccountController::class, 'createBidan']);
 Route::post('/admin/create/account/dinkes', [AdminAccountController::class, 'createDinkes']);
 Route::post('/admin/users/{userId}/reset-password', [AdminAccountController::class, 'reset']);
+
+Route::get('/admin/shop/logs', [ShopController::class, 'getShopLogs']);
+Route::get('/shop', [ShopController::class, 'getByUser']);
+Route::get('/shop/all', [ShopController::class, 'getAll']);
+Route::post('/shop/create',  [ShopController::class, 'create']);
+Route::post('/shop/update/{id}',  [ShopController::class, 'update']);
+Route::post('/shop/delete/{id}',  [ShopController::class, 'delete']);
 
 Route::post('/pregnancies/create', [PregnancyController::class, 'create']);
 Route::post('/recomendation/sports', [RecomendationSportController::class, 'create']);
