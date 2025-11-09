@@ -25,9 +25,8 @@ use App\Http\Controllers\RecomendationSportController;
 use App\Http\Controllers\PregnancyController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\ShopController;
-
-
-
+use App\Http\Controllers\ThreadsController;
+use App\Http\Controllers\ThreadViewsController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -74,6 +73,14 @@ Route::delete('/banner/delete/{id}', [BannerController::class, 'delete']);
 Route::get('/banner/show/production', [BannerController::class, 'ShowOnProd']);
 Route::get('/banner/show/all', [BannerController::class, 'ShowAll']);
 
+Route::prefix('threads')->group(function () {
+    Route::get('/main', [ThreadsController::class, 'getAll']);
+    Route::post('/create', [ThreadsController::class, 'create']);
+    Route::get('/detail/{id}', [ThreadViewsController::class, 'detail']);
+    Route::get('/views/cache', [ThreadViewsController::class, 'showCache']);
+    Route::post('/replies/{id}', [ThreadsController::class, 'reply']);
+    Route::delete('/delete/{id}', [ThreadsController::class, 'delete']);
+});
 
 
 // Semua route terproteksi
