@@ -47,4 +47,7 @@ docker exec -it nuri-backend-app bash -c 'while true; do php artisan schedule:ru
 
 # Start Cron Instant
 docker exec -it nuri-backend-app php artisan threads:sync-views
+docker exec -it nuri-backend-app php artisan threads:sync-likes
 
+# Cek redis
+docker exec -it nuri-backend-redis redis-cli
