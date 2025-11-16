@@ -10,43 +10,69 @@ use Illuminate\Support\Str;
 
 class ThreadsController extends Controller
 {
-    public function getAll(Request $request)
-    {
-        [$uid, $role] = AuthToken::assertRoleFresh($request, ['ibu_hamil', 'bidan', 'admin']);
+public function getAll(Request $request)
+{
+    [$uid, $role] = AuthToken::assertRoleFresh($request, ['ibu_hamil', 'bidan', 'admin']);
 
-        $data = (int) $request->query('data', 30);
-        if ($data > 100) $data = 100;
-        $page = (int) $request->query('page', 1);
-        $offset = ($page - 1) * $data;
+    $data = (int) $request->query('data', 30);
+    if ($data > 100) $data = 100;
 
-        $total = DB::table('threads')
-            ->whereNull('parent_id')
-            ->where('is_archived', false)
-            ->count();
+    $page = (int) $request->query('page', 1);
+    $offset = ($page - 1) * $data;
 
-        $threads = DB::table('threads')
-            ->select('thread_id', 'user_id', 'content', 'category', 'views', 'likes_count', 'created_at')
-            ->whereNull('parent_id')
-            ->where('is_archived', false)
-            ->orderByDesc('created_at')
-            ->offset($offset)
-            ->limit($data)
-            ->get()
-            ->map(function ($item) {
-                $item->content_preview = Str::limit(strip_tags($item->content), 120);
-                return $item;
-            });
+    // Hitung total
+    $total = DB::table('threads')
+        ->whereNull('parent_id')
+        ->where('is_archived', false)
+        ->count();
 
-        return response()->json([
-            'current_page' => $page,
-            'per_page' => $data,
-            'total' => $total,
-            'last_page' => ceil($total / $data),
-            'from' => $offset + 1,
-            'to' => min($offset + $data, $total),
-            'data' => $threads,
-        ]);
-    }
+    $threads = DB::table('threads')
+        ->leftJoin('users', 'threads.user_id', '=', 'users.user_id')
+        ->leftJoin('user_profile', 'threads.user_id', '=', 'user_profile.user_id')
+        ->whereNull('threads.parent_id')
+        ->where('threads.is_archived', false)
+        ->orderByDesc('threads.views')        // 1) Most viewed
+        ->orderByDesc('threads.created_at')   // 2) Latest
+        ->orderByDesc('threads.likes_count')  // 3) Most liked
+        ->offset($offset)
+        ->limit($data)
+        ->select(
+            'threads.thread_id',
+            'threads.user_id',
+            'threads.category',
+            'threads.content',
+            'threads.views',
+            'threads.likes_count',
+            'threads.created_at',
+            'users.name',
+            'user_profile.photo'
+        )
+        ->get()
+        ->map(function ($item) {
+
+            $item->content_preview = Str::limit(strip_tags($item->content), 120);
+
+            if ($item->photo) {
+                $item->photo = asset('storage/' . $item->photo);
+            } else {
+                $item->photo = null;
+            }
+
+            return $item;
+        });
+
+
+    return response()->json([
+        'current_page' => $page,
+        'per_page' => $data,
+        'total' => $total,
+        'last_page' => ceil($total / $data),
+        'from' => $offset + 1,
+        'to' => min($offset + $data, $total),
+        'data' => $threads,
+    ]);
+}
+
 
     public function create(Request $request)
     {

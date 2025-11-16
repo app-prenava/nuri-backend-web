@@ -63,24 +63,30 @@ class ThreadBookmarksController extends Controller
         [$uid] = AuthToken::assertRoleFresh($request, ['ibu_hamil', 'bidan']);
 
         $bookmarks = DB::table('thread_bookmarks')
-            ->where('user_id', $uid)
-            ->select('thread_bookmarks_id', 'thread_id', 'created_at')
-            ->get();
+            ->where('thread_bookmarks.user_id', $uid)
+            ->pluck('thread_id', 'thread_bookmarks_id');
 
         if ($bookmarks->isEmpty()) {
-            return response()->json([
-                'status' => 'success',
-                'data' => []
-            ]);
+            return response()->json(['status' => 'success', 'data' => []]);
         }
 
-        $threadIds = $bookmarks->pluck('thread_id')->all();
+        $threadIds = $bookmarks->values()->all();
 
-        $validThreadIds = DB::table('threads')
-            ->whereIn('thread_id', $threadIds)
-            ->pluck('thread_id')
-            ->all();
+        $threads = DB::table('threads')
+            ->join('users', 'threads.user_id', '=', 'users.user_id')
+            ->whereIn('threads.thread_id', $threadIds)
+            ->select(
+                'threads.thread_id',
+                'threads.user_id',
+                'users.name',
+                'threads.content',
+                'threads.likes_count',
+                'threads.views',
+                'threads.created_at'
+            )
+            ->get();
 
+        $validThreadIds = $threads->pluck('thread_id')->all();
         $deleted = array_diff($threadIds, $validThreadIds);
 
         if (! empty($deleted)) {
@@ -90,15 +96,31 @@ class ThreadBookmarksController extends Controller
                 ->delete();
         }
 
-        $final = $bookmarks->filter(function ($b) use ($validThreadIds) {
-            return in_array($b->thread_id, $validThreadIds);
-        })->values();
+        $data = [];
+
+        foreach ($threads as $t) {
+            $bookmarkId = $bookmarks->search($t->thread_id);
+
+            $cleanContent = preg_replace('/<img[^>]*>/i', '', $t->content);
+            $cleanContent = mb_strimwidth(strip_tags($cleanContent), 0, 120, '...');
+
+            $data[] = [
+                'thread_bookmarks_id' => $bookmarkId,
+                'thread_id'           => $t->thread_id,
+                'user_name'           => $t->name,
+                'content_preview'     => $cleanContent,
+                'likes_count'         => $t->likes_count,
+                'views'               => $t->views,
+                'created_ad'          => $t->created_at,
+            ];
+        }
 
         return response()->json([
             'status' => 'success',
-            'data' => $final,
+            'data' => array_values($data),
         ]);
     }
+
 
     public function destroy(Request $request, int $id)
     {
