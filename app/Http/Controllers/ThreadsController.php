@@ -20,7 +20,6 @@ public function getAll(Request $request)
     $page = (int) $request->query('page', 1);
     $offset = ($page - 1) * $data;
 
-    // Hitung total
     $total = DB::table('threads')
         ->whereNull('parent_id')
         ->where('is_archived', false)
@@ -31,9 +30,9 @@ public function getAll(Request $request)
         ->leftJoin('user_profile', 'threads.user_id', '=', 'user_profile.user_id')
         ->whereNull('threads.parent_id')
         ->where('threads.is_archived', false)
-        ->orderByDesc('threads.views')        // 1) Most viewed
-        ->orderByDesc('threads.created_at')   // 2) Latest
-        ->orderByDesc('threads.likes_count')  // 3) Most liked
+        ->orderByDesc('threads.views')        
+        ->orderByDesc('threads.created_at')  
+        ->orderByDesc('threads.likes_count')
         ->offset($offset)
         ->limit($data)
         ->select(
@@ -49,9 +48,7 @@ public function getAll(Request $request)
         )
         ->get()
         ->map(function ($item) {
-
             $item->content_preview = Str::limit(strip_tags($item->content), 120);
-
             if ($item->photo) {
                 $item->photo = asset('storage/' . $item->photo);
             } else {
