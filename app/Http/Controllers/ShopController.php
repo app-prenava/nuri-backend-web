@@ -21,7 +21,7 @@ class ShopController extends Controller
 
     public function getAll(Request $request)
     {
-        [$uid, $role] = AuthToken::assertRoleFresh($request, 'ibu_hamil');
+        [$uid, $role] = AuthToken::assertRoleFresh($request, ['ibu_hamil', 'admin']);
 
         $data = (int) $request->query('data', 30);
         $page = (int) $request->query('page', 1);
