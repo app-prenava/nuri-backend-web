@@ -8,13 +8,16 @@ use App\Models\KomentarKomunitas;
 use App\Models\Like;
 use App\Models\Saldo;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class KomunitasController extends Controller
 {
     public function index()
     {
-        $Komunitas = Komunitas::with('user:id,name,selected_icon_data_cache')->get();
+        $Komunitas = Komunitas::with('user')->get();
 
         // Transform data to include user information
         $KomunitasWithUser = $Komunitas->map(function ($komunitas) {
@@ -28,9 +31,9 @@ class KomunitasController extends Controller
                 'updated_at' => $komunitas->updated_at,
                 'user_id' => $komunitas->user_id,
                 'user' => [
-                    'id' => $komunitas->user->id,
+                    'id' => $komunitas->user->user_id,
                     'name' => $komunitas->user->name,
-                    'profile_image' => $komunitas->user->selected_icon_data_cache, // URL dari kolom data
+                    'profile_image' => $komunitas->user->selected_icon_data_cache ?? null, // opsional kalau kolom tersedia
                 ]
             ];
         });
@@ -68,7 +71,7 @@ class KomunitasController extends Controller
 
     public function store(Request $request)
     {
-        $user = $request->user(); // pastikan middleware auth:api aktif di route
+        $user = $this->resolveAuthenticatedUser();
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
             }
@@ -79,7 +82,7 @@ class KomunitasController extends Controller
         ]);
 
         $komunitas = Komunitas::create([
-            'user_id' => $user->id,
+            'user_id' => $user->user_id,
             'judul' => $request->judul,
             'deskripsi' => $request->deskripsi,
             'gambar' => $request->gambar,
@@ -97,7 +100,7 @@ class KomunitasController extends Controller
 
 public function addComment(Request $request, $postId)
 {
-    $user = $request->user(); // pastikan middleware auth:api aktif di route
+    $user = $this->resolveAuthenticatedUser();
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
             }
@@ -117,14 +120,14 @@ public function addComment(Request $request, $postId)
     }
 
     // Get current user from token (assume this is handled by auth middleware)
-    $user = auth()->user();
-    $userId = $user ? $user->id : null;
+    $user = $this->resolveAuthenticatedUser();
+    $userId = $user ? $user->user_id : null;
 
     // Create the comment
     try {
         $komentarKomunitas = KomentarKomunitas::create([
             'post_id' => $postId, // Use the URL parameter
-            'user_id' => $user->id, // Simpan user ID dari JWT
+            'user_id' => $user->user_id, // Simpan user ID dari JWT
             'komentar' => $request->komentar,
         ]);
 
@@ -137,7 +140,7 @@ public function addComment(Request $request, $postId)
             'data' => $komentarKomunitas
         ], 201);
     } catch (\Exception $e) {
-        \Log::error('Error adding comment: ' . $e->getMessage());
+        Log::error('Error adding comment: ' . $e->getMessage());
         
         return response()->json([
             'status' => 'error',
@@ -189,14 +192,14 @@ public function addComment(Request $request, $postId)
             }
 
             // Get current user from token (assume this is handled by auth middleware)
-            $user = $request->user(); // pastikan middleware auth:api aktif di route
+            $user = $this->resolveAuthenticatedUser();
             if (!$user) {
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
             // Check if user already liked this post
             $existingLike = Like::where('post_id', $postId)
-                                ->where('user_id', $user->id)
+                                ->where('user_id', $user->user_id)
                                 ->first();
             
             if ($existingLike) {
@@ -218,7 +221,7 @@ public function addComment(Request $request, $postId)
                 // User hasn't liked, add like
                 Like::create([
                     'post_id' => $postId,
-                    'user_id' => $user->id,
+                    'user_id' => $user->user_id,
                 ]);
                 
                 // Increase like count
@@ -346,5 +349,22 @@ public function addComment(Request $request, $postId)
             'status' => 'success',
             'message' => 'Data deleted successfully'
         ], 200);
+    }
+
+    /**
+     * Resolve authenticated user from the API guard or raw JWT token.
+     */
+    private function resolveAuthenticatedUser(): ?User
+    {
+        $user = Auth::guard('api')->user();
+        if ($user) {
+            return $user;
+        }
+
+        try {
+            return JWTAuth::parseToken()->authenticate();
+        } catch (\Throwable $th) {
+            return null;
+        }
     }
 }
