@@ -16,8 +16,21 @@ class ThreadViewsController extends Controller
         [$uid] = AuthToken::assertRoleFresh($request, ['ibu_hamil', 'bidan']);
 
         $thread = DB::table('threads')
-            ->select('thread_id', 'user_id', 'category', 'content', 'views', 'created_at')
-            ->where('thread_id', $id)
+            ->leftJoin('users', 'threads.user_id', '=', 'users.user_id')
+            ->leftJoin('user_profile', 'threads.user_id', '=', 'user_profile.user_id')
+            ->select(
+                'threads.thread_id',
+                'threads.user_id',
+                'threads.category',
+                'threads.content',
+                'threads.views',
+                'threads.likes_count',
+                'threads.created_at',
+                'users.name as user_name',
+                'users.email as user_email',
+                'user_profile.photo as user_photo'
+            )
+            ->where('threads.thread_id', $id)
             ->first();
 
         if (! $thread) {
@@ -43,16 +56,52 @@ class ThreadViewsController extends Controller
 
         $ttl = $redis->ttl($userViewKey);
 
+        $author = [
+            'user_id' => $thread->user_id,
+            'name'    => $thread->user_name ?? 'Unknown',
+            'email'   => $thread->user_email,
+            'photo'   => $thread->user_photo ? asset('storage/' . ltrim($thread->user_photo, '/')) : null,
+        ];
+
+        $comments = DB::table('threads')
+            ->leftJoin('users', 'threads.user_id', '=', 'users.user_id')
+            ->leftJoin('user_profile', 'threads.user_id', '=', 'user_profile.user_id')
+            ->where('threads.parent_id', $id)
+            ->orderBy('threads.created_at')
+            ->select(
+                'threads.thread_id',
+                'threads.user_id',
+                'threads.content',
+                'threads.created_at',
+                'users.name as user_name',
+                'users.email as user_email',
+                'user_profile.photo as user_photo'
+            )
+            ->get()
+            ->map(function ($comment) {
+                $comment->author = [
+                    'user_id' => $comment->user_id,
+                    'name'    => $comment->user_name ?? 'Unknown',
+                    'email'   => $comment->user_email,
+                    'photo'   => $comment->user_photo ? asset('storage/' . ltrim($comment->user_photo, '/')) : null,
+                ];
+
+                unset($comment->user_name, $comment->user_email, $comment->user_photo);
+                return $comment;
+            });
+
         return response()->json([
             'status' => 'success',
             'data' => [
                 'thread_id'  => $thread->thread_id,
-                'user_id'    => $thread->user_id,
                 'category'   => $thread->category,
                 'content'    => $thread->content,
                 'views'      => $views,
+                'likes'      => $thread->likes_count,
                 'ttl'        => $ttl,
                 'created_at' => $thread->created_at,
+                'author'     => $author,
+                'comments'   => $comments,
             ],
         ]);
     }
