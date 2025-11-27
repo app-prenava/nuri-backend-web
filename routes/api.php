@@ -53,6 +53,7 @@ Route::get('/admin/users', [AdminAccountController::class, 'allUser']);
 Route::post('/admin/create/account/bidan',  [AdminAccountController::class, 'createBidan']);
 Route::post('/admin/create/account/dinkes', [AdminAccountController::class, 'createDinkes']);
 Route::post('/admin/users/{userId}/reset-password', [AdminAccountController::class, 'reset']);
+Route::get('/bidan/ibu-hamil', [AdminAccountController::class, 'bidanIbuHamil']);
 
 Route::get('/admin/shop/logs', [ShopController::class, 'getShopLogs']);
 Route::get('/shop', [ShopController::class, 'getByUser']);

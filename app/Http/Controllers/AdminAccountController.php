@@ -139,6 +139,11 @@ class AdminAccountController extends Controller
 
     protected function assertAdmin(Request $request): void
     {
+        $this->assertRole($request, 'admin');
+    }
+
+    protected function assertRole(Request $request, string $requiredRole): void
+    {
         try {
             $token = JWTAuth::getToken();
             if (!$token) {
@@ -157,7 +162,7 @@ class AdminAccountController extends Controller
             $payload = JWTAuth::setToken($token)->getPayload();
             $role = strtolower((string) $payload->get('role'));
 
-            if ($role !== 'admin') {
+            if ($role !== strtolower($requiredRole)) {
                 abort(response()->json([
                     'status'  => 'error',
                     'message' => 'Unauthorized',
@@ -231,6 +236,53 @@ class AdminAccountController extends Controller
                 ? "All users with role '{$filterRole}' retrieved successfully."
                 : 'All users retrieved successfully.',
             'data' => $users,
+        ]);
+    }
+
+    public function bidanIbuHamil(Request $request): JsonResponse
+    {
+        $this->assertRole($request, 'bidan');
+
+        $search = $request->query('search');
+
+        $query = DB::table('users')
+            ->leftJoin('user_profile', 'user_profile.user_id', '=', 'users.user_id')
+            ->select([
+                'users.user_id',
+                'users.name',
+                'users.email',
+                'users.role',
+                'users.is_active',
+                'users.created_at',
+                'users.updated_at',
+                'user_profile.tanggal_lahir',
+                'user_profile.usia',
+                'user_profile.alamat',
+                'user_profile.no_telepon',
+                'user_profile.pendidikan_terakhir',
+                'user_profile.pekerjaan',
+                'user_profile.golongan_darah',
+                'user_profile.photo',
+            ])
+            ->where('users.role', 'ibu_hamil')
+            ->orderBy('users.created_at', 'desc');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $ibuHamil = $query->get()->map(function ($row) {
+            $row->photo_url = $row->photo ? asset('storage/' . $row->photo) : null;
+            return $row;
+        });
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Daftar ibu hamil berhasil diambil.',
+            'data'    => $ibuHamil,
         ]);
     }
 }
