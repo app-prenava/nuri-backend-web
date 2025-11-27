@@ -36,3 +36,18 @@ docker exec -it nuri-backend-app php artisan jwt:secret --show
 
 # Run unit test
 php artisan test --env=testing
+
+# Test redis
+docker exec -it nuri-backend-app php artisan tinker
+Cache::store('redis')->put('ping', 'pong', 10);
+Cache::store('redis')->get('ping');
+
+# Start Cron scheduler
+docker exec -it nuri-backend-app bash -c 'while true; do php artisan schedule:run; sleep $((60 - $(date +%S))); done'
+
+# Start Cron Instant
+docker exec -it nuri-backend-app php artisan threads:sync-views
+docker exec -it nuri-backend-app php artisan threads:sync-likes
+
+# Cek redis
+docker exec -it nuri-backend-redis redis-cli
