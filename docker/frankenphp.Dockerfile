@@ -27,7 +27,10 @@ COPY --from=vendor /app/vendor /app/vendor
 COPY ./docker/laravel-cron /etc/cron.d/laravel-cron
 
 RUN chmod 0644 /etc/cron.d/laravel-cron && crontab /etc/cron.d/laravel-cron && touch /var/log/cron.log
-RUN php artisan package:discover --ansi && php artisan config:cache && php artisan route:cache && php artisan view:cache
+
+# Jangan cache config/route/view saat build, biar bisa pakai env variables dari Railway
+RUN php artisan package:discover --ansi
 
 EXPOSE 80
+
 CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]

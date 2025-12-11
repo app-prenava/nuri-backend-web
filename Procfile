@@ -1,1 +1,1 @@
-web: php artisan serve --port=9000
+web: frankenphp run --config /etc/caddy/Caddyfile

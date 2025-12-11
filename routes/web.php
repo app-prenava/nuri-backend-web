@@ -26,7 +26,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Auth::routes();
+// Disable password reset routes karena ForgotPasswordController tidak ada
+Auth::routes(['reset' => false, 'verify' => false]);
 
 Route::get('/register/bidan', [RegisterController::class, 'showBidanRegistrationForm'])->name('register.bidan.form');
 Route::post('/register/bidan', [RegisterController::class, 'registerBidan'])->name('register.bidan');
