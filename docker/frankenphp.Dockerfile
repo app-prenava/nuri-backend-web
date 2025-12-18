@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install intl pdo pdo_mysql zip gd mbstring exif pcntl bcmath \
     && pecl install redis \
     && docker-php-ext-enable redis \
+    && php -r "if (!extension_loaded('redis')) { exit(1); }" \
     && rm -rf /var/lib/apt/lists/*
 
 COPY ./docker/php.ini /usr/local/etc/php/conf.d/custom.ini

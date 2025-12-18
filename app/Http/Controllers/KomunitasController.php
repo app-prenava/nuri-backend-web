@@ -162,12 +162,26 @@ public function addComment(Request $request, $postId)
             ], 404);
         }
 
-        // Get all comments for this post
-        // Make sure the column name matches (post_id not komunitas_id)
+        // Ambil semua komentar untuk post ini beserta data user-nya
         $comments = KomentarKomunitas::where('post_id', $postId)
-                            ->orderBy('created_at', 'desc')
-                            // ->with('user') // Include user relation if it exists
-                            ->get();
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($comment) {
+                return [
+                    'id' => $comment->id,
+                    'post_id' => $comment->post_id,
+                    'user_id' => $comment->user_id,
+                    'komentar' => $comment->komentar,
+                    'created_at' => $comment->created_at,
+                    'updated_at' => $comment->updated_at,
+                    'user' => $comment->user ? [
+                        'id' => $comment->user->user_id ?? $comment->user->id,
+                        'name' => $comment->user->name ?? 'Unknown',
+                        'profile_image' => $comment->user->selected_icon_data_cache ?? null,
+                    ] : null,
+                ];
+            });
         
         return response()->json([
             'status' => 'berhasil',

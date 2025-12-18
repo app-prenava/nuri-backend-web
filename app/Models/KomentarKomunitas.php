@@ -22,8 +22,9 @@ class KomentarKomunitas extends Model
         return $this->belongsTo(Komunitas::class, 'post_id');
     }
 
-        public function user()
+    public function user()
     {
-        return $this->belongsTo(User::class);
+        // User model menggunakan primary key user_id, jadi kita sesuaikan owner key-nya
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 }
