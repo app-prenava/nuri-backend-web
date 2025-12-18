@@ -32,7 +32,9 @@ class ShopController extends Controller
         if ($data > 100) $data = 100;
         if ($page < 1) $page = 1;
 
-        $query = DB::table('shop');
+        $query = DB::table('shop')
+            ->leftJoin('users', 'shop.user_id', '=', 'users.user_id')
+            ->select('shop.*', 'users.name as seller_name');
 
         if (!empty($category)) {
             $query->where('category', $category);
@@ -74,7 +76,9 @@ class ShopController extends Controller
         if ($page < 1) $page = 1;
 
         $query = DB::table('shop')
-            ->where('user_id', $uid);
+            ->leftJoin('users', 'shop.user_id', '=', 'users.user_id')
+            ->select('shop.*', 'users.name as seller_name')
+            ->where('shop.user_id', $uid);
 
         if (!empty($category)) {
             $query->where('category', $category);
