@@ -78,6 +78,9 @@ Route::get('/shop/all', [ShopController::class, 'getAll']);
 Route::post('/shop/create',  [ShopController::class, 'create']);
 Route::post('/shop/update/{id}',  [ShopController::class, 'update']);
 Route::post('/shop/delete/{id}',  [ShopController::class, 'delete']);
+Route::get('/shop/{id}/reviews', [ShopController::class, 'getReviews']);
+Route::post('/shop/{id}/reviews', [ShopController::class, 'upsertReview']);
+Route::delete('/shop/{productId}/reviews/{reviewId}', [ShopController::class, 'deleteReview']);
 
 Route::post('/pregnancies/create', [PregnancyController::class, 'create']);
 Route::post('/recomendation/sports', [RecomendationSportController::class, 'create']);
