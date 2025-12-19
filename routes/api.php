@@ -31,6 +31,8 @@ use App\Http\Controllers\ThreadLikesController;
 use App\Http\Controllers\RedisDebugController;
 use App\Http\Controllers\ParameterizedController;
 use App\Http\Controllers\ThreadBookmarksController;
+use App\Http\Controllers\TipCategoryController;
+use App\Http\Controllers\PregnancyTipController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -94,6 +96,24 @@ Route::delete('/banner/delete/{id}', [BannerController::class, 'delete']);
 
 Route::get('/banner/show/production', [BannerController::class, 'ShowOnProd']);
 Route::get('/banner/show/all', [BannerController::class, 'ShowAll']);
+
+// Tips Categories (Public untuk GET, Admin untuk CRUD)
+Route::get('/tips/categories', [TipCategoryController::class, 'index']);
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/tips/categories/all', [TipCategoryController::class, 'getAll']); // Admin: Get semua kategori termasuk inactive
+    Route::post('/tips/categories', [TipCategoryController::class, 'store']);
+    Route::put('/tips/categories/{id}', [TipCategoryController::class, 'update']);
+    Route::delete('/tips/categories/{id}', [TipCategoryController::class, 'destroy']);
+});
+
+// Pregnancy Tips (Public untuk GET, Admin/Bidan untuk CRUD)
+Route::get('/tips', [PregnancyTipController::class, 'index']);
+Route::get('/tips/{id}', [PregnancyTipController::class, 'show']);
+Route::middleware(['auth:api'])->group(function () {
+    Route::post('/tips', [PregnancyTipController::class, 'store']);
+    Route::put('/tips/{id}', [PregnancyTipController::class, 'update']);
+    Route::delete('/tips/{id}', [PregnancyTipController::class, 'destroy']);
+});
 
 Route::prefix('threads')->group(function () {
     Route::get('/main', [ThreadsController::class, 'getAll']);
