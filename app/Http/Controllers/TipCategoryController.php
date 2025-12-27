@@ -232,3 +232,4 @@ class TipCategoryController extends Controller
         ], 200);
     }
 }
+

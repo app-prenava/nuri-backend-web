@@ -290,3 +290,4 @@ class PregnancyTipController extends Controller
         ], 200);
     }
 }
+

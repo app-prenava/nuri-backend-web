@@ -49,3 +49,4 @@ class PregnancyTip extends Model
         return $query->where('is_published', true);
     }
 }
+
