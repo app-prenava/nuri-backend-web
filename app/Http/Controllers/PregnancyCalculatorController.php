@@ -45,6 +45,9 @@ class PregnancyCalculatorController extends Controller
             // Hitung data kehamilan lengkap
             $pregnancyData = $this->calculatePregnancyData($hpht, $hpl);
 
+            // Ambil data ukuran janin
+            $fetalSize = $this->getFetalSize($pregnancyData['usia_kehamilan']['minggu']);
+
             return response()->json([
                 'message' => 'Kalkulasi HPL berhasil',
                 'data' => [
@@ -58,6 +61,7 @@ class PregnancyCalculatorController extends Controller
                     'countdown' => $pregnancyData['countdown'],
                     'status' => $pregnancyData['status'],
                     'status_description' => $this->getStatusDescription($pregnancyData['status']),
+                    'ukuran_janin' => $fetalSize,
                 ]
             ], 200);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -107,6 +111,11 @@ class PregnancyCalculatorController extends Controller
                 ? $this->calculatePregnancyData($hpht, $hpl)
                 : null;
 
+            // Ambil data ukuran janin
+            $fetalSize = $pregnancyData
+                ? $this->getFetalSize($pregnancyData['usia_kehamilan']['minggu'])
+                : null;
+
             return response()->json([
                 'message' => 'Data kehamilan berhasil diambil',
                 'data' => [
@@ -122,6 +131,7 @@ class PregnancyCalculatorController extends Controller
                     'countdown' => $pregnancyData['countdown'] ?? null,
                     'status' => $pregnancyData['status'] ?? null,
                     'status_description' => $pregnancyData ? $this->getStatusDescription($pregnancyData['status']) : null,
+                    'ukuran_janin' => $fetalSize,
                     'created_at' => $pregnancy->created_at,
                     'updated_at' => $pregnancy->updated_at,
                 ]
@@ -198,6 +208,11 @@ class PregnancyCalculatorController extends Controller
                 ? $this->calculatePregnancyData($finalHpht, $finalHpl)
                 : null;
 
+            // Ambil data ukuran janin
+            $fetalSize = $pregnancyData
+                ? $this->getFetalSize($pregnancyData['usia_kehamilan']['minggu'])
+                : null;
+
             return response()->json([
                 'message' => 'Data kehamilan berhasil diupdate',
                 'data' => [
@@ -213,6 +228,7 @@ class PregnancyCalculatorController extends Controller
                     'countdown' => $pregnancyData['countdown'] ?? null,
                     'status' => $pregnancyData['status'] ?? null,
                     'status_description' => $pregnancyData ? $this->getStatusDescription($pregnancyData['status']) : null,
+                    'ukuran_janin' => $fetalSize,
                     'updated_at' => $pregnancy->updated_at,
                 ]
             ], 200);
@@ -272,6 +288,11 @@ class PregnancyCalculatorController extends Controller
                 ? $this->calculatePregnancyData($hpht, $hpl)
                 : null;
 
+            // Ambil data ukuran janin
+            $fetalSize = $pregnancyData
+                ? $this->getFetalSize($pregnancyData['usia_kehamilan']['minggu'])
+                : null;
+
             $data = PregnancyCalculator::create([
                 'user_id' => $user->user_id,
                 'hpht'    => $hpht?->toDateString(),
@@ -292,6 +313,7 @@ class PregnancyCalculatorController extends Controller
                     'progress_percentage' => $pregnancyData['progress_percentage'] ?? null,
                     'countdown' => $pregnancyData['countdown'] ?? null,
                     'status' => $pregnancyData['status'] ?? null,
+                    'ukuran_janin' => $fetalSize,
                 ]
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -366,9 +388,8 @@ class PregnancyCalculatorController extends Controller
     {
         try {
             $data = PregnancyCalculator::with('user')->orderBy('created_at', 'desc')->get();
-            $today = now('Asia/Jakarta');
 
-            $data = $data->map(function($item) use ($today) {
+            $data = $data->map(function($item) {
                 $hpht = $item->hpht ? Carbon::parse($item->hpht) : null;
                 $hpl = Carbon::parse($item->hpl);
 
@@ -379,12 +400,14 @@ class PregnancyCalculatorController extends Controller
                     $item->progress_percentage = $pregnancyData['progress_percentage'];
                     $item->countdown = $pregnancyData['countdown'];
                     $item->status = $pregnancyData['status'];
+                    $item->ukuran_janin = $this->getFetalSize($pregnancyData['usia_kehamilan']['minggu']);
                 } else {
                     $item->usia_kehamilan = null;
                     $item->trimester = null;
                     $item->progress_percentage = null;
                     $item->countdown = null;
                     $item->status = null;
+                    $item->ukuran_janin = null;
                 }
 
                 return $item;
@@ -417,6 +440,11 @@ class PregnancyCalculatorController extends Controller
                 ? $this->calculatePregnancyData($hpht, $hpl)
                 : null;
 
+            // Ambil data ukuran janin
+            $fetalSize = $pregnancyData
+                ? $this->getFetalSize($pregnancyData['usia_kehamilan']['minggu'])
+                : null;
+
             $responseData = [
                 'id' => $data->id,
                 'user' => $data->user,
@@ -431,6 +459,7 @@ class PregnancyCalculatorController extends Controller
                 'countdown' => $pregnancyData['countdown'] ?? null,
                 'status' => $pregnancyData['status'] ?? null,
                 'status_description' => $pregnancyData ? $this->getStatusDescription($pregnancyData['status']) : null,
+                'ukuran_janin' => $fetalSize,
                 'created_at' => $data->created_at,
                 'updated_at' => $data->updated_at,
             ];
@@ -561,5 +590,55 @@ class PregnancyCalculatorController extends Controller
         ];
 
         return $descriptions[$status] ?? 'Status tidak diketahui';
+    }
+
+    /**
+     * 🔹 Helper: Data ukuran janin per minggu kehamilan
+     * Menggunakan perbandingan dengan buah/sayuran untuk visualisasi
+     */
+    private function getFetalSize($weeks)
+    {
+        $sizes = [
+            4 => ['nama' => 'Poppy seed', 'nama_indo' => 'Biji poppy', 'berat_gr' => 1, 'panjang_cm' => 3],
+            5 => ['nama' => 'Sesame seed', 'nama_indo' => 'Biji wijen', 'berat_gr' => 1, 'panjang_cm' => 4],
+            6 => ['nama' => 'Lentil', 'nama_indo' => 'Kacang hijau', 'berat_gr' => 2, 'panjang_cm' => 5],
+            7 => ['nama' => 'Blueberry', 'nama_indo' => 'Buah berry', 'berat_gr' => 3, 'panjang_cm' => 6],
+            8 => ['nama' => 'Kidney bean', 'nama_indo' => 'Kacang merah', 'berat_gr' => 5, 'panjang_cm' => 7],
+            9 => ['nama' => 'Grape', 'nama_indo' => 'Anggur', 'berat_gr' => 7, 'panjang_cm' => 8],
+            10 => ['nama' => 'Kumquat', 'nama_indo' => 'Kuat', 'berat_gr' => 10, 'panjang_cm' => 9],
+            11 => ['nama' => 'Fig', 'nama_indo' => 'Buah ara', 'berat_gr' => 14, 'panjang_cm' => 10],
+            12 => ['nama' => 'Lemon', 'nama_indo' => 'Lemon', 'berat_gr' => 50, 'panjang_cm' => 8.5],
+            13 => ['nama' => 'Pea pod', 'nama_indo' => 'Polong', 'berat_gr' => 70, 'panjang_cm' => 11],
+            14 => ['nama' => 'Peach', 'nama_indo' => 'Peach', 'berat_gr' => 100, 'panjang_cm' => 12],
+            15 => ['nama' => 'Apple', 'nama_indo' => 'Apel', 'berat_gr' => 140, 'panjang_cm' => 13],
+            16 => ['nama' => 'Avocado', 'nama_indo' => 'Alpukat', 'berat_gr' => 180, 'panjang_cm' => 14],
+            17 => ['nama' => 'Turnip', 'nama_indo' => ' Lobak', 'berat_gr' => 220, 'panjang_cm' => 15],
+            18 => ['nama' => 'Bell pepper', 'nama_indo' => 'Paprika', 'berat_gr' => 280, 'panjang_cm' => 16],
+            19 => ['nama' => 'Heirloom tomato', 'nama_indo' => 'Tomat', 'berat_gr' => 340, 'panjang_cm' => 17],
+            20 => ['nama' => 'Banana', 'nama_indo' => 'Pisang', 'berat_gr' => 400, 'panjang_cm' => 18],
+            21 => ['nama' => 'Carrot', 'nama_indo' => 'Wortel', 'berat_gr' => 470, 'panjang_cm' => 19],
+            22 => ['nama' => 'Spaghetti squash', 'nama_indo' => 'Labu spaghetti', 'berat_gr' => 540, 'panjang_cm' => 20],
+            23 => ['nama' => 'Large mango', 'nama_indo' => 'Mangga besar', 'berat_gr' => 620, 'panjang_cm' => 21],
+            24 => ['nama' => 'Corn', 'nama_indo' => 'Jagung', 'berat_gr' => 700, 'panjang_cm' => 22],
+            25 => ['nama' => 'Rutabaga', 'nama_indo' => ' Lobak Swedia', 'berat_gr' => 780, 'panjang_cm' => 23],
+            26 => ['nama' => 'Scallion', 'nama_indo' => 'Daun bawang', 'berat_gr' => 860, 'panjang_cm' => 24],
+            27 => ['nama' => 'Cauliflower', 'nama_indo' => 'Bunga kol', 'berat_gr' => 950, 'panjang_cm' => 25],
+            28 => ['nama' => 'Eggplant', 'nama_indo' => 'Terong', 'berat_gr' => 1050, 'panjang_cm' => 26],
+            29 => ['nama' => 'Butternut squash', 'nama_indo' => 'Labu butternut', 'berat_gr' => 1150, 'panjang_cm' => 27],
+            30 => ['nama' => 'Cabbage', 'nama_indo' => 'Kol', 'berat_gr' => 1260, 'panjang_cm' => 28],
+            31 => ['nama' => 'Coconut', 'nama_indo' => 'Kelapa', 'berat_gr' => 1370, 'panjang_cm' => 29],
+            32 => ['nama' => 'Jicama', 'nama_indo' => 'Bengkuang', 'berat_gr' => 1500, 'panjang_cm' => 30],
+            33 => ['nama' => 'Pineapple', 'nama_indo' => 'Nanas', 'berat_gr' => 1700, 'panjang_cm' => 31],
+            34 => ['nama' => 'Cantaloupe', 'nama_indo' => 'Cantaloupe', 'berat_gr' => 1900, 'panjang_cm' => 32],
+            35 => ['nama' => 'Honeydew melon', 'nama_indo' => 'Melon madu', 'berat_gr' => 2100, 'panjang_cm' => 33],
+            36 => ['nama' => 'Papaya', 'nama_indo' => 'Pepaya', 'berat_gr' => 2300, 'panjang_cm' => 34],
+            37 => ['nama' => 'Winter melon', 'nama_indo' => 'Labu musim dingin', 'berat_gr' => 2500, 'panjang_cm' => 35],
+            38 => ['nama' => 'Pumpkin', 'nama_indo' => 'Labu kuning', 'berat_gr' => 2700, 'panjang_cm' => 36],
+            39 => ['nama' => 'Watermelon', 'nama_indo' => 'Semangka kecil', 'berat_gr' => 2900, 'panjang_cm' => 37],
+            40 => ['nama' => 'Jackfruit', 'nama_indo' => 'Nangka', 'berat_gr' => 3100, 'panjang_cm' => 38],
+        ];
+
+        // Return data ukuran janin sesuai minggu, atau null jika tidak ada data
+        return $sizes[$weeks] ?? null;
     }
 }
