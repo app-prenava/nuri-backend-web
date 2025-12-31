@@ -95,6 +95,12 @@ class DatabaseSeeder extends Seeder
                 PostpartumArticlesSeeder::class,
                 SaranMakananSeeder::class,
                 ProductSeeder::class,
+                IbuHamilSeeder::class,
+                KomunitasPostSeeder::class,
+                CatatanKunjunganSeeder::class,
+                ShopSeeder::class,
+                ShopReviewSeeder::class,
+                KomunitasLikeSeeder::class,
             ]);
         });
     }

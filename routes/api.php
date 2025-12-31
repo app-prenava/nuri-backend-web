@@ -203,6 +203,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/water-intake/{id}', [WaterIntakeController::class, 'destroy']);
 
     // Kalkulator HPL
+    Route::post('/pregnancy-calculator/calculate', [PregnancyCalculatorController::class, 'calculate']);
+    Route::get('/pregnancy-calculator/my', [PregnancyCalculatorController::class, 'getMyPregnancy']);
     Route::get('pregnancy-calculators', [PregnancyCalculatorController::class, 'index']);
     Route::post('pregnancy-calculators', [PregnancyCalculatorController::class, 'store']);
     Route::get('pregnancy-calculators/{id}', [PregnancyCalculatorController::class, 'show']);
