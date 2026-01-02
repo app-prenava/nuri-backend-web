@@ -30,6 +30,7 @@ class SupabaseService
             'headers' => [
                 'apikey' => $this->serviceRoleKey,
                 'Authorization' => 'Bearer ' . $this->serviceRoleKey,
+                'Content-Type' => 'application/json',
             ],
             'timeout' => 30,
         ]);
@@ -47,9 +48,20 @@ class SupabaseService
     public function upload(string $path, $content, string $contentType): ?array
     {
         try {
-            $response = $this->client->post("/storage/v1/object/{$this->bucket}/{$path}", [
+            // Create a new client without default Content-Type for this request
+            $uploadClient = new Client([
+                'base_uri' => $this->baseUrl,
+                'headers' => [
+                    'apikey' => $this->serviceRoleKey,
+                    'Authorization' => 'Bearer ' . $this->serviceRoleKey,
+                ],
+                'timeout' => 30,
+            ]);
+
+            $response = $uploadClient->post("/storage/v1/object/{$this->bucket}/{$path}", [
                 'headers' => [
                     'Content-Type' => $contentType,
+                    'Content-Length' => strlen(is_resource($content) ? stream_get_contents($content) : $content),
                 ],
                 'body' => is_resource($content) ? stream_get_contents($content) : $content,
             ]);
