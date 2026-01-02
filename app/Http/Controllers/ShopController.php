@@ -48,7 +48,8 @@ class ShopController extends Controller
             ->limit($data)
             ->get()
             ->map(function ($item) {
-                $item->photo = url('storage/' . ltrim($item->photo, '/'));
+                // Generate full URL dari Aiven
+                $item->photo = Storage::url($item->photo);
                 return $item;
             });
 
@@ -92,7 +93,8 @@ class ShopController extends Controller
             ->limit($data)
             ->get()
             ->map(function ($item) {
-                $item->photo = url('storage/' . ltrim($item->photo, '/'));
+                // Generate full URL dari Aiven
+                $item->photo = Storage::url($item->photo);
                 return $item;
             });
 
@@ -130,7 +132,8 @@ class ShopController extends Controller
 
         if ($v->fails()) return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
 
-        $path = $request->file('photo')->store('shop', 'public');
+        // Upload ke Aiven (default disk)
+        $path = $request->file('photo')->store('shop');
         $priceFormatted = $this->formatPrice($request->price);
 
         $product_id = DB::table('shop')->insertGetId([
@@ -147,7 +150,8 @@ class ShopController extends Controller
             'updated_at'   => now(),
         ]);
 
-        $photoUrl = $path ? asset('storage/' . $path) : null;
+        // Generate full URL dari Aiven
+        $photoUrl = $path ? Storage::url($path) : null;
 
         ShopLog::record('create', $uid, [
             'product_id'   => $product_id,
@@ -212,11 +216,13 @@ class ShopController extends Controller
         if ($request->has('category')) $update['category'] = $request->category;
 
         if ($request->hasFile('photo')) {
-            $newPath = $request->file('photo')->store('shop', 'public');
+            // Upload ke Aiven (default disk)
+            $newPath = $request->file('photo')->store('shop');
             $update['photo'] = $newPath;
 
-            if (!empty($row->photo) && Storage::disk('public')->exists($row->photo)) {
-                Storage::disk('public')->delete($row->photo);
+            // Hapus file lama dari Aiven
+            if (!empty($row->photo) && Storage::exists($row->photo)) {
+                Storage::delete($row->photo);
             }
         }
 
@@ -225,9 +231,10 @@ class ShopController extends Controller
         DB::table('shop')->where('product_id', $id)->update($update);
 
         $merged = array_merge((array) $row, $update);
+        // Generate full URL dari Aiven
         $merged['photo'] = isset($update['photo'])
-            ? asset('storage/' . $update['photo'])
-            : asset('storage/' . $row->photo);
+            ? Storage::url($update['photo'])
+            : Storage::url($row->photo);
 
         ShopLog::record('update', $uid, $merged);
 
@@ -255,8 +262,9 @@ class ShopController extends Controller
             ], 403);
         }
 
-        if (!empty($row->photo) && Storage::disk('public')->exists($row->photo)) {
-            Storage::disk('public')->delete($row->photo);
+        // Hapus file dari Aiven
+        if (!empty($row->photo) && Storage::exists($row->photo)) {
+            Storage::delete($row->photo);
         }
 
         DB::table('shop')->where('product_id', $id)->delete();

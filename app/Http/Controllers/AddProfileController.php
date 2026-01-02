@@ -122,7 +122,7 @@ class AddProfileController extends Controller
 
         $path = null;
         if ($req->hasFile('photo')) {
-            $path = $req->file('photo')->store('profiles/bidan', 'public');
+            $path = $req->file('photo')->store('profiles/bidan');
         }
 
         DB::table('bidan_profile')->insert([
@@ -138,7 +138,8 @@ class AddProfileController extends Controller
             'updated_at'                => now(),
         ]);
 
-        $photoUrl = $path ? asset('storage/' . $path) : null;
+        // Generate full URL dari Aiven
+        $photoUrl = $path ? Storage::url($path) : null;
 
         return response()->json([
             'status'  => 'success',
@@ -175,7 +176,7 @@ class AddProfileController extends Controller
 
         $path = null;
         if ($req->hasFile('photo')) {
-            $path = $req->file('photo')->store('profiles/dinkes', 'public');
+            $path = $req->file('photo')->store('profiles/dinkes');
         }
 
         DB::table('user_dinkes')->insert([
@@ -187,7 +188,8 @@ class AddProfileController extends Controller
             'updated_at' => now(),
         ]);
 
-        $photoUrl = $path ? asset('storage/' . $path) : null;
+        // Generate full URL dari Aiven
+        $photoUrl = $path ? Storage::url($path) : null;
 
         return response()->json([
             'status'  => 'success',
@@ -226,7 +228,7 @@ class AddProfileController extends Controller
 
         $path = null;
         if ($req->hasFile('photo')) {
-            $path = $req->file('photo')->store('profiles/ibu', 'public');
+            $path = $req->file('photo')->store('profiles/ibu');
         }
 
         DB::table('user_profile')->insert([
@@ -243,7 +245,8 @@ class AddProfileController extends Controller
             'updated_at'          => now(),
         ]);
         
-        $photoUrl = $path ? asset('storage/' . $path) : null;
+        // Generate full URL dari Aiven
+        $photoUrl = $path ? Storage::url($path) : null;
 
         return response()->json([
             'status'  => 'success',
@@ -289,11 +292,12 @@ class AddProfileController extends Controller
         ]));
 
         if ($req->hasFile('photo')) {
-            $newPath = $req->file('photo')->store('profiles/bidan', 'public');
+            $newPath = $req->file('photo')->store('profiles/bidan');
             $data['photo'] = $newPath;
 
-            if (!empty($existing->photo) && Storage::disk('public')->exists($existing->photo)) {
-                Storage::disk('public')->delete($existing->photo);
+            // Hapus file lama dari Aiven
+            if (!empty($existing->photo) && Storage::exists($existing->photo)) {
+                Storage::delete($existing->photo);
             }
         }
 
@@ -325,11 +329,12 @@ class AddProfileController extends Controller
         $data = $this->onlyNotNull($req->only(['jabatan','nip']));
 
         if ($req->hasFile('photo')) {
-            $newPath = $req->file('photo')->store('profiles/dinkes', 'public');
+            $newPath = $req->file('photo')->store('profiles/dinkes');
             $data['photo'] = $newPath;
 
-            if (!empty($existing->photo) && Storage::disk('public')->exists($existing->photo)) {
-                Storage::disk('public')->delete($existing->photo);
+            // Hapus file lama dari Aiven
+            if (!empty($existing->photo) && Storage::exists($existing->photo)) {
+                Storage::delete($existing->photo);
             }
         }
 
@@ -369,11 +374,12 @@ class AddProfileController extends Controller
         ]));
 
         if ($req->hasFile('photo')) {
-            $newPath = $req->file('photo')->store('profiles/ibu', 'public');
+            $newPath = $req->file('photo')->store('profiles/ibu');
             $data['photo'] = $newPath;
 
-            if (!empty($existing->photo) && Storage::disk('public')->exists($existing->photo)) {
-                Storage::disk('public')->delete($existing->photo);
+            // Hapus file lama dari Aiven
+            if (!empty($existing->photo) && Storage::exists($existing->photo)) {
+                Storage::delete($existing->photo);
             }
         }
 
@@ -419,9 +425,10 @@ class AddProfileController extends Controller
             ], 404);
         }
 
-        
+
+        // Generate full URL dari Aiven
         if (!empty($profile->photo)) {
-            $profile->photo = Storage::disk('public')->url($profile->photo);
+            $profile->photo = Storage::url($profile->photo);
         }
 
         return response()->json([

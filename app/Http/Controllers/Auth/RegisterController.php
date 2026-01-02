@@ -111,16 +111,16 @@ class RegisterController extends Controller
                 ->withInput();
         }
 
-        // Handle file uploads if present
+        // Handle file uploads if present - Upload ke Aiven (default disk)
         $logoPath = null;
         $fotoKtpPath = null;
 
         if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
-            $logoPath = $request->file('logo')->store('logos', 'public');
+            $logoPath = $request->file('logo')->store('logos');
         }
 
         if ($request->hasFile('foto_ktp') && $request->file('foto_ktp')->isValid()) {
-            $fotoKtpPath = $request->file('foto_ktp')->store('ktp', 'public');
+            $fotoKtpPath = $request->file('foto_ktp')->store('ktp');
         }
 
         $user = User::create([

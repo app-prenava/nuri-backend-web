@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'default' => env('FILESYSTEM_DISK', 'aiven'),
 
     /*
     |--------------------------------------------------------------------------
@@ -54,6 +54,19 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+        ],
+
+        // Aiven S3 Object Storage
+        'aiven' => [
+            'driver' => 's3',
+            'key' => env('AIVEN_ACCESS_KEY_ID'),
+            'secret' => env('AIVEN_SECRET_ACCESS_KEY'),
+            'region' => env('AIVEN_DEFAULT_REGION'),
+            'bucket' => env('AIVEN_BUCKET'),
+            'url' => env('AIVEN_URL'),
+            'endpoint' => env('AIVEN_ENDPOINT'),
+            'use_path_style_endpoint' => env('AIVEN_USE_PATH_STYLE_ENDPOINT', true),
             'throw' => false,
         ],
 

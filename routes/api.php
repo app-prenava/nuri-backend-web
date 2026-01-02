@@ -33,6 +33,7 @@ use App\Http\Controllers\ParameterizedController;
 use App\Http\Controllers\ThreadBookmarksController;
 use App\Http\Controllers\TipCategoryController;
 use App\Http\Controllers\PregnancyTipController;
+use App\Http\Controllers\CatatanIbuController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -216,6 +217,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     // PostPartum Article
     Route::get('/postpartum', [PostpartumArticleController::class, 'index']);
     Route::get('/postpartum/{id}', [PostpartumArticleController::class, 'show']);
+
+    // Catatan Ibu (Kunjungan)
+    Route::get('/catatan-ibu', [CatatanIbuController::class, 'index']);
+    Route::post('/catatan-ibu', [CatatanIbuController::class, 'store']);
+    Route::get('/catatan-ibu/{id}', [CatatanIbuController::class, 'show']);
+    Route::put('/catatan-ibu/{id}', [CatatanIbuController::class, 'update']);
+    Route::delete('/catatan-ibu/{id}', [CatatanIbuController::class, 'destroy']);
 
     // Protected Data
     Route::get('/protected-data', function () {

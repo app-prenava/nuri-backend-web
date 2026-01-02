@@ -24,12 +24,16 @@ class BannerController extends Controller
 
         $data = $request->validate([
             'name'      => ['required','string','max:255'],
-            'photo'     => ['required','file','mimes:jpg,jpeg,png,webp','max:500'],
+            'photo'     => ['required','file','mimes:jpg,jpeg,png,webp','max:2000'],
             'is_active' => ['nullable','boolean'],
             'url'       => ['required','string','max:2048','url'],
         ], $messages);
 
-        $path = $request->file('photo')->store('banners', 'public');
+        // Upload ke Aiven S3 Object Storage
+        $path = $request->file('photo')->store('banners', 'aiven');
+
+        // Generate full URL dari Aiven
+        $photoUrl = Storage::disk('aiven')->url($path);
 
         DB::table('ad_banner')->insert([
             'name'       => $data['name'],
@@ -39,8 +43,6 @@ class BannerController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-
-        $photoUrl = $path ? asset('storage/' . $path) : null;
 
         return response()->json([
             'status'  => 'success',
@@ -84,11 +86,13 @@ class BannerController extends Controller
         if ($request->has('url'))       $update['url'] = $data['url'];
 
         if ($request->hasFile('photo')) {
-            $newPath = $request->file('photo')->store('banners', 'public');
+            // Upload ke Aiven S3 Object Storage
+            $newPath = $request->file('photo')->store('banners', 'aiven');
             $update['photo'] = $newPath;
 
-            if (!empty($banner->photo) && Storage::disk('public')->exists($banner->photo)) {
-                Storage::disk('public')->delete($banner->photo);
+            // Hapus file lama dari Aiven
+            if (!empty($banner->photo) && Storage::disk('aiven')->exists($banner->photo)) {
+                Storage::disk('aiven')->delete($banner->photo);
             }
         }
 
@@ -115,8 +119,9 @@ class BannerController extends Controller
             ], 404);
         }
 
-        if (!empty($banner->photo) && Storage::disk('public')->exists($banner->photo)) {
-            Storage::disk('public')->delete($banner->photo);
+        // Hapus file dari Aiven
+        if (!empty($banner->photo) && Storage::disk('aiven')->exists($banner->photo)) {
+            Storage::disk('aiven')->delete($banner->photo);
         }
 
         DB::table('ad_banner')->where('id', $id)->delete();
@@ -161,7 +166,7 @@ class BannerController extends Controller
     private function transformBannerPhotos(Collection $rows): Collection
     {
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk('public');
+        $disk = Storage::disk('aiven');
 
         return $rows->map(function ($r) use ($disk) {
             $r->photo = $disk->url($r->photo);
