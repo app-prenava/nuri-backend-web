@@ -16,9 +16,14 @@ class SupabaseService
 
     public function __construct()
     {
-        $this->baseUrl = rtrim(env('SUPABASE_URL'), '/');
+        $this->baseUrl = rtrim(env('SUPABASE_URL', ''), '/');
         $this->bucket = env('SUPABASE_BUCKET', 'images');
-        $this->serviceRoleKey = env('SUPABASE_SERVICE_ROLE_KEY');
+        $this->serviceRoleKey = env('SUPABASE_SERVICE_ROLE_KEY', '');
+
+        // Validate required configuration
+        if (empty($this->baseUrl) || empty($this->serviceRoleKey)) {
+            throw new \Exception('Supabase configuration is missing. Please check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env file.');
+        }
 
         $this->client = new Client([
             'base_uri' => $this->baseUrl,
