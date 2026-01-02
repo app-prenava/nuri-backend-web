@@ -11,10 +11,17 @@ use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Support\AuthToken;
-use Illuminate\Support\Facades\Storage;
+use App\Services\SupabaseService;
 
 class AddProfileController extends Controller
 {
+    protected SupabaseService $supabase;
+
+    public function __construct(SupabaseService $supabase)
+    {
+        $this->supabase = $supabase;
+    }
+
     public function create(Request $request): JsonResponse
     {
         [$uid, $role] = \App\Support\AuthToken::ensureActiveAndFreshOrFail($request);
@@ -120,9 +127,12 @@ class AddProfileController extends Controller
             return response()->json(['status'=>'error','message'=>'Profile already exists.'], 409);
         }
 
-        $path = null;
+        $photoUrl = null;
         if ($req->hasFile('photo')) {
-            $path = $req->file('photo')->store('profiles/bidan');
+            $uploadResult = $this->supabase->uploadFile($req->file('photo'), 'profiles/bidan');
+            if ($uploadResult) {
+                $photoUrl = $uploadResult['public_url'];
+            }
         }
 
         DB::table('bidan_profile')->insert([
@@ -133,13 +143,10 @@ class AddProfileController extends Controller
             'kecamatan_tempat_praktik'  => $req->kecamatan_tempat_praktik,
             'telepon_tempat_praktik'    => $req->telepon_tempat_praktik,
             'spesialisasi'              => $req->spesialisasi,
-            'photo'                     => $path,
+            'photo'                     => $photoUrl,
             'created_at'                => now(),
             'updated_at'                => now(),
         ]);
-
-        // Generate full URL dari Aiven
-        $photoUrl = $path ? Storage::url($path) : null;
 
         return response()->json([
             'status'  => 'success',
@@ -174,22 +181,22 @@ class AddProfileController extends Controller
             return response()->json(['status'=>'error','message'=>'Profile already exists.'], 409);
         }
 
-        $path = null;
+        $photoUrl = null;
         if ($req->hasFile('photo')) {
-            $path = $req->file('photo')->store('profiles/dinkes');
+            $uploadResult = $this->supabase->uploadFile($req->file('photo'), 'profiles/dinkes');
+            if ($uploadResult) {
+                $photoUrl = $uploadResult['public_url'];
+            }
         }
 
         DB::table('user_dinkes')->insert([
             'user_id'    => $uid,
             'jabatan'    => $req->jabatan,
             'nip'        => $req->nip,
-            'photo'      => $path,
+            'photo'      => $photoUrl,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-
-        // Generate full URL dari Aiven
-        $photoUrl = $path ? Storage::url($path) : null;
 
         return response()->json([
             'status'  => 'success',
@@ -226,9 +233,12 @@ class AddProfileController extends Controller
             return response()->json(['status'=>'error','message'=>'Profile already exists.'], 409);
         }
 
-        $path = null;
+        $photoUrl = null;
         if ($req->hasFile('photo')) {
-            $path = $req->file('photo')->store('profiles/ibu');
+            $uploadResult = $this->supabase->uploadFile($req->file('photo'), 'profiles/ibu');
+            if ($uploadResult) {
+                $photoUrl = $uploadResult['public_url'];
+            }
         }
 
         DB::table('user_profile')->insert([
@@ -240,13 +250,10 @@ class AddProfileController extends Controller
             'pendidikan_terakhir' => $req->pendidikan_terakhir,
             'pekerjaan'           => $req->pekerjaan,
             'golongan_darah'      => $req->golongan_darah,
-            'photo'               => $path,
+            'photo'               => $photoUrl,
             'created_at'          => now(),
             'updated_at'          => now(),
         ]);
-        
-        // Generate full URL dari Aiven
-        $photoUrl = $path ? Storage::url($path) : null;
 
         return response()->json([
             'status'  => 'success',
@@ -292,12 +299,17 @@ class AddProfileController extends Controller
         ]));
 
         if ($req->hasFile('photo')) {
-            $newPath = $req->file('photo')->store('profiles/bidan');
-            $data['photo'] = $newPath;
+            $uploadResult = $this->supabase->uploadFile($req->file('photo'), 'profiles/bidan');
+            if ($uploadResult) {
+                $data['photo'] = $uploadResult['public_url'];
 
-            // Hapus file lama dari Aiven
-            if (!empty($existing->photo) && Storage::exists($existing->photo)) {
-                Storage::delete($existing->photo);
+                // Hapus file lama dari Supabase
+                if (!empty($existing->photo)) {
+                    $oldPath = $this->extractPathFromUrl($existing->photo);
+                    if ($oldPath) {
+                        $this->supabase->delete($oldPath);
+                    }
+                }
             }
         }
 
@@ -329,12 +341,17 @@ class AddProfileController extends Controller
         $data = $this->onlyNotNull($req->only(['jabatan','nip']));
 
         if ($req->hasFile('photo')) {
-            $newPath = $req->file('photo')->store('profiles/dinkes');
-            $data['photo'] = $newPath;
+            $uploadResult = $this->supabase->uploadFile($req->file('photo'), 'profiles/dinkes');
+            if ($uploadResult) {
+                $data['photo'] = $uploadResult['public_url'];
 
-            // Hapus file lama dari Aiven
-            if (!empty($existing->photo) && Storage::exists($existing->photo)) {
-                Storage::delete($existing->photo);
+                // Hapus file lama dari Supabase
+                if (!empty($existing->photo)) {
+                    $oldPath = $this->extractPathFromUrl($existing->photo);
+                    if ($oldPath) {
+                        $this->supabase->delete($oldPath);
+                    }
+                }
             }
         }
 
@@ -374,12 +391,17 @@ class AddProfileController extends Controller
         ]));
 
         if ($req->hasFile('photo')) {
-            $newPath = $req->file('photo')->store('profiles/ibu');
-            $data['photo'] = $newPath;
+            $uploadResult = $this->supabase->uploadFile($req->file('photo'), 'profiles/ibu');
+            if ($uploadResult) {
+                $data['photo'] = $uploadResult['public_url'];
 
-            // Hapus file lama dari Aiven
-            if (!empty($existing->photo) && Storage::exists($existing->photo)) {
-                Storage::delete($existing->photo);
+                // Hapus file lama dari Supabase
+                if (!empty($existing->photo)) {
+                    $oldPath = $this->extractPathFromUrl($existing->photo);
+                    if ($oldPath) {
+                        $this->supabase->delete($oldPath);
+                    }
+                }
             }
         }
 
@@ -425,11 +447,7 @@ class AddProfileController extends Controller
             ], 404);
         }
 
-
-        // Generate full URL dari Aiven
-        if (!empty($profile->photo)) {
-            $profile->photo = Storage::url($profile->photo);
-        }
+        // Photo sudah berupa public URL dari Supabase
 
         return response()->json([
             'status'  => 'success',
@@ -464,5 +482,19 @@ class AddProfileController extends Controller
     protected function badRequest(string $msg): JsonResponse
     {
         return response()->json(['status'=>'error','message'=>$msg], 400);
+    }
+
+    /**
+     * Extract path dari Supabase URL
+     * Contoh: https://xxx.supabase.co/storage/v1/object/public/images/profiles/xxx.jpg
+     * Result: profiles/xxx.jpg
+     */
+    private function extractPathFromUrl(string $url): ?string
+    {
+        $pattern = '/\/storage\/v1\/object\/public\/images\/(.+)$/';
+        if (preg_match($pattern, $url, $matches)) {
+            return $matches[1];
+        }
+        return null;
     }
 }

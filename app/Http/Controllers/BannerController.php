@@ -5,13 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use App\Support\AuthToken;
 use Illuminate\Support\Collection;
+use App\Services\SupabaseService;
 
 
 class BannerController extends Controller
 {
+    protected SupabaseService $supabase;
+
+    public function __construct(SupabaseService $supabase)
+    {
+        $this->supabase = $supabase;
+    }
+
     public function create(Request $request): JsonResponse
     {
         [,$role] = AuthToken::assertRoleFresh($request, 'admin');
@@ -29,15 +36,19 @@ class BannerController extends Controller
             'url'       => ['required','string','max:2048','url'],
         ], $messages);
 
-        // Upload ke Aiven S3 Object Storage
-        $path = $request->file('photo')->store('banners', 'aiven');
+        // Upload ke Supabase Storage
+        $uploadResult = $this->supabase->uploadFile($request->file('photo'), 'banners');
 
-        // Generate full URL dari Aiven
-        $photoUrl = Storage::disk('aiven')->url($path);
+        if (!$uploadResult) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Gagal mengupload foto ke Supabase',
+            ], 500);
+        }
 
         DB::table('ad_banner')->insert([
             'name'       => $data['name'],
-            'photo'      => $path,
+            'photo'      => $uploadResult['public_url'],
             'is_active'  => isset($data['is_active']) ? (bool)$data['is_active'] : true,
             'url'        => $data['url'],
             'created_at' => now(),
@@ -50,7 +61,7 @@ class BannerController extends Controller
             'data'    => [
                 'name'       => $data['name'],
                 'is_active'  => isset($data['is_active']) ? (bool)$data['is_active'] : true,
-                'photo'      => $photoUrl,
+                'photo'      => $uploadResult['public_url'],
             ],
         ], 201);
     }
@@ -86,13 +97,19 @@ class BannerController extends Controller
         if ($request->has('url'))       $update['url'] = $data['url'];
 
         if ($request->hasFile('photo')) {
-            // Upload ke Aiven S3 Object Storage
-            $newPath = $request->file('photo')->store('banners', 'aiven');
-            $update['photo'] = $newPath;
+            // Upload ke Supabase Storage
+            $uploadResult = $this->supabase->uploadFile($request->file('photo'), 'banners');
 
-            // Hapus file lama dari Aiven
-            if (!empty($banner->photo) && Storage::disk('aiven')->exists($banner->photo)) {
-                Storage::disk('aiven')->delete($banner->photo);
+            if ($uploadResult) {
+                $update['photo'] = $uploadResult['public_url'];
+
+                // Hapus file lama dari Supabase jika URL lengkap tersimpan
+                if (!empty($banner->photo)) {
+                    $oldPath = $this->extractPathFromUrl($banner->photo);
+                    if ($oldPath) {
+                        $this->supabase->delete($oldPath);
+                    }
+                }
             }
         }
 
@@ -119,9 +136,12 @@ class BannerController extends Controller
             ], 404);
         }
 
-        // Hapus file dari Aiven
-        if (!empty($banner->photo) && Storage::disk('aiven')->exists($banner->photo)) {
-            Storage::disk('aiven')->delete($banner->photo);
+        // Hapus file dari Supabase
+        if (!empty($banner->photo)) {
+            $path = $this->extractPathFromUrl($banner->photo);
+            if ($path) {
+                $this->supabase->delete($path);
+            }
         }
 
         DB::table('ad_banner')->where('id', $id)->delete();
@@ -165,13 +185,22 @@ class BannerController extends Controller
     /** @return \Illuminate\Support\Collection */
     private function transformBannerPhotos(Collection $rows): Collection
     {
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk('aiven');
+        // Photo sudah berupa public URL dari Supabase, tidak perlu transformasi
+        return $rows;
+    }
 
-        return $rows->map(function ($r) use ($disk) {
-            $r->photo = $disk->url($r->photo);
-            return $r;
-        });
+    /**
+     * Extract path dari Supabase URL
+     * Contoh: https://xxx.supabase.co/storage/v1/object/public/images/banners/xxx.jpg
+     * Result: banners/xxx.jpg
+     */
+    private function extractPathFromUrl(string $url): ?string
+    {
+        $pattern = '/\/storage\/v1\/object\/public\/images\/(.+)$/';
+        if (preg_match($pattern, $url, $matches)) {
+            return $matches[1];
+        }
+        return null;
     }
 
 }

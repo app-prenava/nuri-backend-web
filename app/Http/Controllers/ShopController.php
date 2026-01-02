@@ -5,14 +5,21 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Support\AuthToken;
 use App\Helpers\ShopLog;
 use App\Models\ShopReview;
+use App\Services\SupabaseService;
 
 class ShopController extends Controller
 {
+    protected SupabaseService $supabase;
+
+    public function __construct(SupabaseService $supabase)
+    {
+        $this->supabase = $supabase;
+    }
+
     protected function formatPrice(string $price): string
     {
         $clean = preg_replace('/\D/', '', $price);
@@ -46,12 +53,8 @@ class ShopController extends Controller
         $result = $query
             ->offset(($page - 1) * $data)
             ->limit($data)
-            ->get()
-            ->map(function ($item) {
-                // Generate full URL dari Aiven
-                $item->photo = Storage::url($item->photo);
-                return $item;
-            });
+            ->get();
+        // Photo sudah berupa public URL dari Supabase
 
         return response()->json([
             'current_page' => $page,
@@ -91,12 +94,8 @@ class ShopController extends Controller
         $result = $query
             ->offset(($page - 1) * $data)
             ->limit($data)
-            ->get()
-            ->map(function ($item) {
-                // Generate full URL dari Aiven
-                $item->photo = Storage::url($item->photo);
-                return $item;
-            });
+            ->get();
+        // Photo sudah berupa public URL dari Supabase
 
         return response()->json([
             'current_page' => $page,
@@ -132,9 +131,18 @@ class ShopController extends Controller
 
         if ($v->fails()) return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
 
-        // Upload ke Aiven (default disk)
-        $path = $request->file('photo')->store('shop');
+        // Upload ke Supabase Storage
+        $uploadResult = $this->supabase->uploadFile($request->file('photo'), 'shop');
+
+        if (!$uploadResult) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Gagal mengupload foto ke Supabase',
+            ], 500);
+        }
+
         $priceFormatted = $this->formatPrice($request->price);
+        $photoUrl = $uploadResult['public_url'];
 
         $product_id = DB::table('shop')->insertGetId([
             'user_id'      => $uid,
@@ -143,15 +151,12 @@ class ShopController extends Controller
             'description'  => $request->description,
             'price'        => $priceFormatted,
             'url'          => $request->url,
-            'photo'        => $path,
+            'photo'        => $photoUrl,
             'average_rating' => 0,
             'rating_count'   => 0,
             'created_at'   => now(),
             'updated_at'   => now(),
         ]);
-
-        // Generate full URL dari Aiven
-        $photoUrl = $path ? Storage::url($path) : null;
 
         ShopLog::record('create', $uid, [
             'product_id'   => $product_id,
@@ -216,13 +221,19 @@ class ShopController extends Controller
         if ($request->has('category')) $update['category'] = $request->category;
 
         if ($request->hasFile('photo')) {
-            // Upload ke Aiven (default disk)
-            $newPath = $request->file('photo')->store('shop');
-            $update['photo'] = $newPath;
+            // Upload ke Supabase Storage
+            $uploadResult = $this->supabase->uploadFile($request->file('photo'), 'shop');
 
-            // Hapus file lama dari Aiven
-            if (!empty($row->photo) && Storage::exists($row->photo)) {
-                Storage::delete($row->photo);
+            if ($uploadResult) {
+                $update['photo'] = $uploadResult['public_url'];
+
+                // Hapus file lama dari Supabase
+                if (!empty($row->photo)) {
+                    $oldPath = $this->extractPathFromUrl($row->photo);
+                    if ($oldPath) {
+                        $this->supabase->delete($oldPath);
+                    }
+                }
             }
         }
 
@@ -231,10 +242,7 @@ class ShopController extends Controller
         DB::table('shop')->where('product_id', $id)->update($update);
 
         $merged = array_merge((array) $row, $update);
-        // Generate full URL dari Aiven
-        $merged['photo'] = isset($update['photo'])
-            ? Storage::url($update['photo'])
-            : Storage::url($row->photo);
+        // Photo sudah berupa public URL dari Supabase
 
         ShopLog::record('update', $uid, $merged);
 
@@ -262,9 +270,12 @@ class ShopController extends Controller
             ], 403);
         }
 
-        // Hapus file dari Aiven
-        if (!empty($row->photo) && Storage::exists($row->photo)) {
-            Storage::delete($row->photo);
+        // Hapus file dari Supabase
+        if (!empty($row->photo)) {
+            $path = $this->extractPathFromUrl($row->photo);
+            if ($path) {
+                $this->supabase->delete($path);
+            }
         }
 
         DB::table('shop')->where('product_id', $id)->delete();
@@ -493,5 +504,18 @@ class ShopController extends Controller
         ]);
     }
 
+    /**
+     * Extract path dari Supabase URL
+     * Contoh: https://xxx.supabase.co/storage/v1/object/public/images/shop/xxx.jpg
+     * Result: shop/xxx.jpg
+     */
+    private function extractPathFromUrl(string $url): ?string
+    {
+        $pattern = '/\/storage\/v1\/object\/public\/images\/(.+)$/';
+        if (preg_match($pattern, $url, $matches)) {
+            return $matches[1];
+        }
+        return null;
+    }
 
 }
