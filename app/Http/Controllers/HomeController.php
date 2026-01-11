@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Models\User;
 use App\Models\DeteksiPenyakit;
 use App\Models\PrediksiDepresi;
@@ -18,13 +19,34 @@ class HomeController extends Controller
 
     public function index()
     {
-        $ibuHamil = User::where('role', 'ibu_hamil')->get();
-        // $ibuHamil = User::all();
-      
-        // Data lainnya tanpa optimasi
-        $deteksiPenyakit = DeteksiPenyakit::all();
-        $prediksiDepresi = PrediksiDepresi::all();
-        $prediksiJanin = Prediction::all();
+        // Optimasi: Hanya ambil data yang diperlukan dengan pagination
+        $ibuHamil = User::where('role', 'ibu_hamil')
+            ->select('user_id', 'name', 'email', 'created_at')
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        // Optimasi: Gunakan cache untuk data yang sering diakses
+        $deteksiPenyakit = Cache::remember('deteksi_penyakit_count', 300, function () {
+            return DeteksiPenyakit::select('id', 'user_id', 'created_at')
+                ->latest()
+                ->limit(100)
+                ->get();
+        });
+
+        $prediksiDepresi = Cache::remember('prediksi_depresi_count', 300, function () {
+            return PrediksiDepresi::select('id', 'user_id', 'created_at')
+                ->latest()
+                ->limit(100)
+                ->get();
+        });
+
+        $prediksiJanin = Cache::remember('prediksi_janin_count', 300, function () {
+            return Prediction::select('id', 'user_id', 'created_at')
+                ->latest()
+                ->limit(100)
+                ->get();
+        });
 
         return view('bidan.dashboard', [
             'ibuHamil' => $ibuHamil,
@@ -36,13 +58,34 @@ class HomeController extends Controller
 
        public function index_dinkes()
     {
-        $ibuHamil = User::where('role', 'ibu_hamil')->get();
-        // $ibuHamil = User::all();
-      
-        // Data lainnya tanpa optimasi
-        $deteksiPenyakit = DeteksiPenyakit::all();
-        $prediksiDepresi = PrediksiDepresi::all();
-        $prediksiJanin = Prediction::all();
+        // Optimasi: Hanya ambil data yang diperlukan dengan pagination
+        $ibuHamil = User::where('role', 'ibu_hamil')
+            ->select('user_id', 'name', 'email', 'created_at')
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        // Optimasi: Gunakan cache untuk data yang sering diakses
+        $deteksiPenyakit = Cache::remember('deteksi_penyakit_count', 300, function () {
+            return DeteksiPenyakit::select('id', 'user_id', 'created_at')
+                ->latest()
+                ->limit(100)
+                ->get();
+        });
+
+        $prediksiDepresi = Cache::remember('prediksi_depresi_count', 300, function () {
+            return PrediksiDepresi::select('id', 'user_id', 'created_at')
+                ->latest()
+                ->limit(100)
+                ->get();
+        });
+
+        $prediksiJanin = Cache::remember('prediksi_janin_count', 300, function () {
+            return Prediction::select('id', 'user_id', 'created_at')
+                ->latest()
+                ->limit(100)
+                ->get();
+        });
 
         return view('dinkes.dashboardd', [
             'ibuHamil' => $ibuHamil,

@@ -34,32 +34,32 @@ return [
     ],
 
     'redis' => [
-        'client' => env('REDIS_CLIENT', 'phpredis'),
+        'client' => env('REDIS_CLIENT', 'predis'),
         'options' => [
-            'cluster' => 'redis',
-            'prefix' => 'laravel_cache:',
+            'cluster' => env('REDIS_CLUSTER', 'redis'),
+            'prefix' => env('REDIS_PREFIX', 'laravel_cache_'),
         ],
         'default' => [
-            'host' => env('REDIS_HOST', 'redis'),
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
             'password' => env('REDIS_PASSWORD', null),
-            'port' => env('REDIS_PORT', 6379),
-            'database' => env('REDIS_DB', 0),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_DB', '0'),
         ],
         'cache' => [
-            'host' => env('REDIS_HOST', 'redis'),
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
             'password' => env('REDIS_PASSWORD', null),
-            'port' => env('REDIS_PORT', 6379),
-            'database' => env('REDIS_CACHE_DB', 1),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_CACHE_DB', '1'),
         ],
         'likes' => [
-            'host' => env('REDIS_HOST', 'redis'),
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
             'password' => env('REDIS_PASSWORD', null),
-            'port' => env('REDIS_PORT', 6379),
-            'database' => 2,
-                'options' => [
-                'prefix' => 'laravel_cache:',
-            ],
-        ]
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => '2',
+        ],
     ]
 
 ];
