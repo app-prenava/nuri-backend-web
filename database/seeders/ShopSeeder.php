@@ -11,14 +11,14 @@ class ShopSeeder extends Seeder
     {
         $now = now();
 
-        // Produk kehamilan dengan gambar dari S3 yang sudah ada di proyek
+        // Produk kehamilan dengan gambar dari Supabase Storage
         $products = [
             [
                 'product_name' => 'Pregnancy Pillow - Bantal Hamil U-Shape',
                 'category' => 'Bantal Hamil',
                 'description' => 'Bantal hamil berbentuk U yang nyaman untuk mendukung perut, punggung, dan lutut saat tidur. Terbuat dari kapas premium yang lembut dan breathable. Membantu mengurangi sakit punggung dan memberikan kualitas tidur yang lebih baik selama kehamilan.',
                 'price' => '250000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/stroller.png',
+                'photo' => 'shop/pregnancy-pillow.png',
                 'url' => 'https://shope.ee/pregnancy-pillow-u-shape-original'
             ],
             [
@@ -26,7 +26,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Perawatan Kulit',
                 'description' => 'Minyak khusus untuk mencegah dan mengurangi stretch mark selama kehamilan. Mengandung Vitamin A, E, dan minyak alami yang membantu meregenerasi kulit. Aman untuk ibu hamil dan telah teruji klinis.',
                 'price' => '180000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/alami.png',
+                'photo' => 'shop/stretch-mark-cream.png',
                 'url' => 'https://shope.ee/bio-oil-stretch-mark-cream-original'
             ],
             [
@@ -34,7 +34,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Pakaian Hamil',
                 'description' => 'Gaun hamil dengan bahan katun stretch yang lembut dan nyaman. Desain yang fashionable dan bisa dipakai hingga 9 bulan kehamilan. Cocok untuk acara santai maupun formal.',
                 'price' => '195000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/stroller_1.png',
+                'photo' => 'shop/maternity-dress.png',
                 'url' => 'https://shope.ee/maternity-dress-comfy-wear'
             ],
             [
@@ -42,7 +42,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Suplemen',
                 'description' => 'Suplemen kehamilan lengkap dengan DHA, asam folat, zat besi, dan kalsium. Mendukung perkembangan janin dan kesehatan ibu hamil. Terdaftar BPOM dan direkomendasikan dokter kandungan.',
                 'price' => '320000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/grow.png',
+                'photo' => 'shop/prenatal-vitamins.png',
                 'url' => 'https://shope.ee/prenatal-vitamins-dha-folic-acid'
             ],
             [
@@ -50,7 +50,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Korset Hamil',
                 'description' => 'Korset penyangga perut untuk mengurangi beban pada punggung dan pinggang. Bahan breathable dan elastis yang nyaman dipakai sehari-hari. Membantu postur tubuh tetap baik selama kehamilan.',
                 'price' => '150000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/hipseat.png',
+                'photo' => 'shop/belly-band.png',
                 'url' => 'https://shope.ee/pregnancy-belly-band-support'
             ],
             [
@@ -58,7 +58,7 @@ class ShopSeeder extends Seeder
                 'category' => 'ASI & Menyusui',
                 'description' => 'Alat pompa ASI manual yang ergonomis dan mudah digunakan. Terbuat dari bahan BPA-free yang aman untuk bayi. Dilengkapi dengan botol penyimpan dan tutup anti tumpah.',
                 'price' => '275000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/stroller.png',
+                'photo' => 'shop/breast-pump.png',
                 'url' => 'https://shope.ee/manual-breast-pump-bpa-free'
             ],
             [
@@ -66,7 +66,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Pakaian Hamil',
                 'description' => 'Celana leggings hamil dengan bahan super stretch yang nyaman. Dapat dipakai dari trimester pertama hingga postpartum. Pinggang elastis yang tidak menekan perut.',
                 'price' => '125000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/stroller_1.png',
+                'photo' => 'shop/maternity-leggings.png',
                 'url' => 'https://shope.ee/maternity-leggings-stretch-comfort'
             ],
             [
@@ -74,7 +74,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Alat Kesehatan',
                 'description' => 'Test pack kehamilan dengan akurasi tinggi 99%. Hasil dapat dibaca dalam 3 menit. Mudah digunakan dan praktis. Mendapatkan 2 strip dalam satu kemasan.',
                 'price' => '45000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/alami.png',
+                'photo' => 'shop/test-pack.png',
                 'url' => 'https://shope.ee/pregnancy-test-pack-accurate'
             ],
             [
@@ -82,7 +82,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Alat Kesehatan',
                 'description' => 'Alat untuk mendengar detak jantung janin sejak usia 12 minggu. Dilengkapi layar LCD untuk menampilkan detak jantung per menit. Aman dan mudah digunakan di rumah.',
                 'price' => '450000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/grow.png',
+                'photo' => 'shop/baby-doppler.png',
                 'url' => 'https://shope.ee/baby-doppler-fetal-heartbeat-monitor'
             ],
             [
@@ -90,7 +90,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Pasca Melahirkan',
                 'description' => 'Sabuk pemulihan pasca melahirkan untuk membantu mengembalikan bentuk perut. Bahan breathable dan dapat disesuaikan ukurannya. Membantu mengurangi bengkak dan nyeri pasca persalinan.',
                 'price' => '175000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/hipseat.png',
+                'photo' => 'shop/recovery-belt.png',
                 'url' => 'https://shope.ee/postpartum-recovery-belt-binder'
             ],
             [
@@ -98,7 +98,7 @@ class ShopSeeder extends Seeder
                 'category' => 'ASI & Menyusui',
                 'description' => 'Bra menyusui dengan kancing depan yang praktis. Bahan katun yang lembut dan menyerap keringat. Dilengkapi kawat penyangga yang nyaman. Tersedia ukuran S-XXL.',
                 'price' => '135000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/stroller.png',
+                'photo' => 'shop/nursing-bra.png',
                 'url' => 'https://shope.ee/nursing-bra-breastfeeding-comfort'
             ],
             [
@@ -106,7 +106,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Buku & Jurnal',
                 'description' => 'Buku jurnal kehamilan untuk mencatat setiap momen berharga. Dilengkapi dengan tempat foto, checklist kesehatan, dan tips kehamilan. Desain cantik dan inspiratif.',
                 'price' => '95000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/stroller_1.png',
+                'photo' => 'shop/pregnancy-journal.png',
                 'url' => 'https://shope.ee/pregnancy-journal-notebook-memory'
             ],
             [
@@ -114,7 +114,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Korset Hamil',
                 'description' => 'Sabuk penyangga kehamilan yang mengurangi tekanan pada punggung dan pinggul. Bahan elastis yang tidak panas. Dapat disesuaikan dengan pertumbuhan perut.',
                 'price' => '165000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/hipseat.png',
+                'photo' => 'shop/support-belt.png',
                 'url' => 'https://shope.ee/maternity-pregnancy-support-belt'
             ],
             [
@@ -122,7 +122,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Makanan & Minuman',
                 'description' => 'Permen jahe alami untuk mengurangi morning sickness. Terbuat dari jahe pilihan dan gula aren. Praktis dibawa kemana saja dan aman untuk ibu hamil.',
                 'price' => '35000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/alami.png',
+                'photo' => 'shop/ginger-candy.png',
                 'url' => 'https://shope.ee/ginger-candy-morning-sickness-relief'
             ],
             [
@@ -130,7 +130,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Gendongan Bayi',
                 'description' => 'Gendongan bayi dengan posisi hips yang sehat untuk pinggang bayi. Bahan katun yang adem dan kuat. Terdapat penyangga kepala untuk newborn. Aman dan ergonomis.',
                 'price' => '285000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/hipseat.png',
+                'photo' => 'shop/baby-carrier.png',
                 'url' => 'https://shope.ee/baby-carrier-hipseat-ergonomic-safe'
             ],
             [
@@ -138,7 +138,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Perawatan Kulit',
                 'description' => 'Lotion khusus ibu hamil dengan vitamin E dan shea butter. Melembapkan kulit yang kering dan membantu mencegah stretch mark. Wangi lembut dan tidak menyengat.',
                 'price' => '85000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/alami.png',
+                'photo' => 'shop/body-lotion.png',
                 'url' => 'https://shope.ee/pregnancy-body-lotion-vitamin-e'
             ],
             [
@@ -146,7 +146,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Bantal Menyusui',
                 'description' => 'Bantal menyusui berbentuk U yang memudahkan posisi menyusui. Isi dakron premium yang empuk dan tidak mudah kempes. Sarung dapat dicuci dan diganti.',
                 'price' => '195000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/stroller.png',
+                'photo' => 'shop/nursing-pillow.png',
                 'url' => 'https://shope.ee/nursing-pillow-breastfeeding-u-shape'
             ],
             [
@@ -154,7 +154,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Olahraga',
                 'description' => 'Matras yoga dengan ketebalan 10mm yang nyaman untuk ibu hamil. Anti-slip dan mudah dibawa-bawa. Cocok untuk senam hamil, yoga, dan pilates.',
                 'price' => '145000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/stroller_1.png',
+                'photo' => 'shop/yoga-mat.png',
                 'url' => 'https://shope.ee/prenatal-yoga-mat-exercise-thick'
             ],
             [
@@ -162,7 +162,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Alat Kesehatan',
                 'description' => 'Alat untuk memantau gerakan janin secara teratur. Dilengkapi aplikasi untuk mencatat dan menganalisis pola gerakan. Membantu mendeteksi ketidaknormalan sejak dini.',
                 'price' => '350000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/grow.png',
+                'photo' => 'shop/movement-tracker.png',
                 'url' => 'https://shope.ee/baby-movement-tracker-kick-counter'
             ],
             [
@@ -170,7 +170,7 @@ class ShopSeeder extends Seeder
                 'category' => 'Pakaian Hamil',
                 'description' => 'Kaos kaki kompresi untuk mengurangi bengkak pada kaki dan tungkai. Meningkatkan sirkulasi darah dan mencegah varises. Bahan breathable dan nyaman dipakai seharian.',
                 'price' => '110000',
-                'photo' => 'https://amazon-datazone-sehatiapp.s3.ap-southeast-1.amazonaws.com/produk/stroller.png',
+                'photo' => 'shop/compression-socks.png',
                 'url' => 'https://shope.ee/compression-socks-pregnancy-swelling'
             ]
         ];
@@ -202,6 +202,6 @@ class ShopSeeder extends Seeder
             ]);
         }
 
-        $this->command->info("Successfully created " . count($products) . " shop products with images from existing S3 bucket.");
+        $this->command->info("Successfully created " . count($products) . " shop products with Supabase Storage paths.");
     }
 }

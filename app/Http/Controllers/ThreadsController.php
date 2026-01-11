@@ -49,10 +49,10 @@ public function getAll(Request $request)
         ->get()
         ->map(function ($item) {
             $item->content_preview = Str::limit(strip_tags($item->content), 120);
-            if ($item->photo) {
-                $item->photo = asset('storage/' . $item->photo);
-            } else {
-                $item->photo = null;
+
+            // Transform photo URL using PhotoHelper
+            if (!empty($item->photo)) {
+                $item->photo = \App\Helpers\PhotoHelper::transformPhotoUrl($item->photo, 'supabase');
             }
 
             return $item;

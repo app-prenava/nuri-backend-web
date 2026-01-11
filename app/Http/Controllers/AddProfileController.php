@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\PhotoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -296,7 +297,7 @@ class AddProfileController extends Controller
             // Hapus file lama dari Supabase jika ada path lama
             if (!empty($existing->photo)) {
                 // Extract path dari URL lama jika photo disimpan sebagai full URL
-                $oldPath = $this->extractPathFromUrl($existing->photo);
+                $oldPath = PhotoHelper::extractPathFromUrl($existing->photo);
                 if ($oldPath && Storage::disk('supabase')->exists($oldPath)) {
                     Storage::disk('supabase')->delete($oldPath);
                 }
@@ -336,7 +337,7 @@ class AddProfileController extends Controller
 
             // Hapus file lama dari Supabase jika ada path lama
             if (!empty($existing->photo)) {
-                $oldPath = $this->extractPathFromUrl($existing->photo);
+                $oldPath = PhotoHelper::extractPathFromUrl($existing->photo);
                 if ($oldPath && Storage::disk('supabase')->exists($oldPath)) {
                     Storage::disk('supabase')->delete($oldPath);
                 }
@@ -384,7 +385,7 @@ class AddProfileController extends Controller
 
             // Hapus file lama dari Supabase jika ada path lama
             if (!empty($existing->photo)) {
-                $oldPath = $this->extractPathFromUrl($existing->photo);
+                $oldPath = PhotoHelper::extractPathFromUrl($existing->photo);
                 if ($oldPath && Storage::disk('supabase')->exists($oldPath)) {
                     Storage::disk('supabase')->delete($oldPath);
                 }
@@ -433,7 +434,10 @@ class AddProfileController extends Controller
             ], 404);
         }
 
-        // Photo sudah berupa public URL dari Supabase
+        // Transform photo if it's a relative path
+        if (!empty($profile->photo)) {
+            $profile->photo = PhotoHelper::transformPhotoUrl($profile->photo, 'supabase');
+        }
 
         return response()->json([
             'status'  => 'success',
@@ -468,19 +472,5 @@ class AddProfileController extends Controller
     protected function badRequest(string $msg): JsonResponse
     {
         return response()->json(['status'=>'error','message'=>$msg], 400);
-    }
-
-    /**
-     * Extract path dari Supabase URL
-     * Contoh: https://xxx.supabase.co/storage/v1/object/public/images/profiles/xxx.jpg
-     * Result: profiles/xxx.jpg
-     */
-    private function extractPathFromUrl(string $url): ?string
-    {
-        $pattern = '/\/storage\/v1\/object\/public\/images\/(.+)$/';
-        if (preg_match($pattern, $url, $matches)) {
-            return $matches[1];
-        }
-        return null;
     }
 }

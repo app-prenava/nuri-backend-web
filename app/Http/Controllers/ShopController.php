@@ -495,7 +495,7 @@ class ShopController extends Controller
     {
         return collect($items)->map(function ($item) {
             if (!empty($item->photo)) {
-                $item->photo = Storage::disk('supabase')->url($item->photo);
+                $item->photo = \App\Helpers\PhotoHelper::transformPhotoUrl($item->photo, 'supabase');
             }
             return $item;
         });
