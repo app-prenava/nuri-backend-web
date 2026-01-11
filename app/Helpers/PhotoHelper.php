@@ -50,9 +50,10 @@ class PhotoHelper
      */
     public static function extractPathFromUrl(string $url): ?string
     {
-        $pattern = '/\/storage\/v1\/object\/public\/images\/(.+)$/';
+        // Support both 'img' and 'images' bucket names
+        $pattern = '/\/storage\/v1\/object\/public\/(img|images)\/(.+)$/';
         if (preg_match($pattern, $url, $matches)) {
-            return $matches[1];
+            return $matches[1] . '/' . $matches[2]; // Return bucket/path format
         }
         return null;
     }

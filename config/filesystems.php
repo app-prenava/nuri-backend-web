@@ -76,14 +76,19 @@ return [
             'key' => env('SUPABASE_S3_ACCESS_KEY_ID'),
             'secret' => env('SUPABASE_S3_SECRET_ACCESS_KEY'),
             'region' => env('SUPABASE_S3_REGION'),
-            'bucket' => env('SUPABASE_S3_BUCKET'),
-            'url' => env('SUPABASE_S3_ENDPOINT') . '/storage/v1/object/public/' . env('SUPABASE_S3_BUCKET'),
+            'bucket' => env('SUPABASE_S3_BUCKET', 'img'),
+            'url' => env('SUPABASE_S3_ENDPOINT') . '/storage/v1/object/public/' . env('SUPABASE_S3_BUCKET', 'img'),
             'endpoint' => env('SUPABASE_S3_ENDPOINT') . '/storage/v1/s3',
             'use_path_style_endpoint' => true,
             'options' => [
                 'URL' => env('SUPABASE_S3_ENDPOINT') . '/storage/v1/s3',
+                // Add these options for better Supabase compatibility
+                'overrides' => [
+                    'visibility' => 'public',
+                ],
             ],
             'throw' => false,
+            'visibility' => 'public',
         ],
 
     ],
