@@ -15,9 +15,14 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class KomunitasController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $Komunitas = Komunitas::with('user')->get();
+        $page = $request->query('page', 1);
+        $limit = $request->query('limit', 10);
+
+        $Komunitas = Komunitas::with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate($limit, ['*'], 'page', $page);
 
         // Transform data to include user information
         $KomunitasWithUser = $Komunitas->map(function ($komunitas) {
@@ -26,20 +31,26 @@ class KomunitasController extends Controller
                 'judul' => $komunitas->judul,
                 'deskripsi' => $komunitas->deskripsi,
                 'apresiasi' => $komunitas->apresiasi,
-                'komentar' => $komunitas->komentar,
+                'komen' => $komunitas->komen,
                 'created_at' => $komunitas->created_at,
                 'updated_at' => $komunitas->updated_at,
                 'user_id' => $komunitas->user_id,
                 'user' => $komunitas->user ? [
                     'id' => $komunitas->user->user_id,
                     'name' => $komunitas->user->name,
-                    'profile_image' => $komunitas->user->selected_icon_data_cache ?? null, // opsional kalau kolom tersedia
+                    'profile_image' => $komunitas->user->selected_icon_data_cache ?? null,
                 ] : null
             ];
         });
 
         return response()->json([
-            'Komunitas' => $KomunitasWithUser
+            'Komunitas' => $KomunitasWithUser,
+            'pagination' => [
+                'current_page' => $Komunitas->currentPage(),
+                'last_page' => $Komunitas->lastPage(),
+                'per_page' => $Komunitas->perPage(),
+                'total' => $Komunitas->total(),
+            ]
         ]);
     }
 
