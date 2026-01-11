@@ -275,7 +275,7 @@ class AdminAccountController extends Controller
         }
 
         $ibuHamil = $query->get()->map(function ($row) {
-            $row->photo_url = $row->photo ? asset('storage/' . $row->photo) : null;
+            $row->photo_url = \App\Helpers\PhotoHelper::transformPhotoUrl($row->photo, 'supabase');
             return $row;
         });
 

@@ -60,7 +60,7 @@ class ThreadViewsController extends Controller
             'user_id' => $thread->user_id,
             'name'    => $thread->user_name ?? 'Unknown',
             'email'   => $thread->user_email,
-            'photo'   => $thread->user_photo ? asset('storage/' . ltrim($thread->user_photo, '/')) : null,
+            'photo'   => $thread->user_photo ? \App\Helpers\PhotoHelper::transformPhotoUrl($thread->user_photo, 'supabase') : null,
         ];
 
         $comments = DB::table('threads')
@@ -83,7 +83,7 @@ class ThreadViewsController extends Controller
                     'user_id' => $comment->user_id,
                     'name'    => $comment->user_name ?? 'Unknown',
                     'email'   => $comment->user_email,
-                    'photo'   => $comment->user_photo ? asset('storage/' . ltrim($comment->user_photo, '/')) : null,
+                    'photo'   => $comment->user_photo ? \App\Helpers\PhotoHelper::transformPhotoUrl($comment->user_photo, 'supabase') : null,
                 ];
 
                 unset($comment->user_name, $comment->user_email, $comment->user_photo);
