@@ -430,14 +430,27 @@ class AddProfileController extends Controller
         ]));
 
         if ($req->hasFile('photo')) {
-            $newPath = $req->file('photo')->store('profiles/ibu', 'supabase');
-            $data['photo'] = Storage::disk('supabase')->url($newPath);
+            $supabase = new SupabaseService();
+            $result = $supabase->uploadFile($req->file('photo'), 'profiles/ibu');
+
+            if (!$result) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to upload photo to Supabase'
+                ], 500);
+            }
+
+            $data['photo'] = $result['public_url'];
 
             // Hapus file lama dari Supabase jika ada path lama
             if (!empty($existing->photo)) {
                 $oldPath = PhotoHelper::extractPathFromUrl($existing->photo);
-                if ($oldPath && Storage::disk('supabase')->exists($oldPath)) {
-                    Storage::disk('supabase')->delete($oldPath);
+                if ($oldPath) {
+                    try {
+                        $supabase->delete($oldPath);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to delete old photo: ' . $e->getMessage());
+                    }
                 }
             }
         }
@@ -449,7 +462,7 @@ class AddProfileController extends Controller
 
 
         return response()->json(['status'=>'success','message'=>'Profile kamu berhasil diupdate']);
-        
+
     }
 
 

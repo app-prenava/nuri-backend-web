@@ -130,10 +130,18 @@ class ShopController extends Controller
         if ($v->fails()) return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
 
         // Upload ke Supabase Storage
-        $path = $request->file('photo')->store('shop', 'supabase');
+        $supabase = new \App\Services\SupabaseService();
+        $result = $supabase->uploadFile($request->file('photo'), 'shop');
 
-        // Generate public URL
-        $photoUrl = Storage::disk('supabase')->url($path);
+        if (!$result) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to upload photo to Supabase'
+            ], 500);
+        }
+
+        $photoUrl = $result['public_url'];
+        $path = $result['path'];
 
         $priceFormatted = $this->formatPrice($request->price);
 
@@ -215,12 +223,28 @@ class ShopController extends Controller
 
         if ($request->hasFile('photo')) {
             // Upload ke Supabase Storage
-            $newPath = $request->file('photo')->store('shop', 'supabase');
-            $update['photo'] = $newPath;
+            $supabase = new \App\Services\SupabaseService();
+            $result = $supabase->uploadFile($request->file('photo'), 'shop');
+
+            if (!$result) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to upload photo to Supabase'
+                ], 500);
+            }
+
+            $update['photo'] = $result['path'];
 
             // Hapus file lama dari Supabase
-            if (!empty($row->photo) && Storage::disk('supabase')->exists($row->photo)) {
-                Storage::disk('supabase')->delete($row->photo);
+            if (!empty($row->photo)) {
+                $oldPath = \App\Helpers\PhotoHelper::extractPathFromUrl($row->photo);
+                if ($oldPath) {
+                    try {
+                        $supabase->delete($oldPath);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to delete old photo: ' . $e->getMessage());
+                    }
+                }
             }
         }
 
