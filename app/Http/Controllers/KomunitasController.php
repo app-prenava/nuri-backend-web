@@ -30,11 +30,11 @@ class KomunitasController extends Controller
                 'created_at' => $komunitas->created_at,
                 'updated_at' => $komunitas->updated_at,
                 'user_id' => $komunitas->user_id,
-                'user' => [
+                'user' => $komunitas->user ? [
                     'id' => $komunitas->user->user_id,
                     'name' => $komunitas->user->name,
                     'profile_image' => $komunitas->user->selected_icon_data_cache ?? null, // opsional kalau kolom tersedia
-                ]
+                ] : null
             ];
         });
 
@@ -176,8 +176,8 @@ public function addComment(Request $request, $postId)
                     'created_at' => $comment->created_at,
                     'updated_at' => $comment->updated_at,
                     'user' => $comment->user ? [
-                        'id' => $comment->user->user_id ?? $comment->user->id,
-                        'name' => $comment->user->name ?? 'Unknown',
+                        'id' => $comment->user->user_id,
+                        'name' => $comment->user->name,
                         'profile_image' => $comment->user->selected_icon_data_cache ?? null,
                     ] : null,
                 ];
