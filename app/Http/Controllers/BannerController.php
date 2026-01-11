@@ -28,11 +28,19 @@ class BannerController extends Controller
             'url'       => ['required','string','max:2048','url'],
         ], $messages);
 
-        // Upload ke Supabase Storage (pakai default disk)
-        $path = $request->file('photo')->store('banners', 'supabase');
+        // Upload ke Supabase Storage
+        $supabase = new \App\Services\SupabaseService();
+        $result = $supabase->uploadFile($request->file('photo'), 'banners');
 
-        // Generate public URL
-        $photoUrl = Storage::disk('supabase')->url($path);
+        if (!$result) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to upload photo to Supabase'
+            ], 500);
+        }
+
+        $photoUrl = $result['public_url'];
+        $path = $result['path'];
 
         DB::table('ad_banner')->insert([
             'name'       => $data['name'],
@@ -86,12 +94,28 @@ class BannerController extends Controller
 
         if ($request->hasFile('photo')) {
             // Upload ke Supabase Storage
-            $newPath = $request->file('photo')->store('banners', 'supabase');
-            $update['photo'] = $newPath;
+            $supabase = new \App\Services\SupabaseService();
+            $result = $supabase->uploadFile($request->file('photo'), 'banners');
+
+            if (!$result) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to upload photo to Supabase'
+                ], 500);
+            }
+
+            $update['photo'] = $result['path'];
 
             // Hapus file lama dari Supabase
-            if (!empty($banner->photo) && Storage::disk('supabase')->exists($banner->photo)) {
-                Storage::disk('supabase')->delete($banner->photo);
+            if (!empty($banner->photo)) {
+                $oldPath = \App\Helpers\PhotoHelper::extractPathFromUrl($banner->photo);
+                if ($oldPath) {
+                    try {
+                        $supabase->delete($oldPath);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to delete old photo: ' . $e->getMessage());
+                    }
+                }
             }
         }
 
@@ -119,8 +143,16 @@ class BannerController extends Controller
         }
 
         // Hapus file dari Supabase
-        if (!empty($banner->photo) && Storage::disk('supabase')->exists($banner->photo)) {
-            Storage::disk('supabase')->delete($banner->photo);
+        if (!empty($banner->photo)) {
+            $oldPath = \App\Helpers\PhotoHelper::extractPathFromUrl($banner->photo);
+            if ($oldPath) {
+                try {
+                    $supabase = new \App\Services\SupabaseService();
+                    $supabase->delete($oldPath);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to delete old photo: ' . $e->getMessage());
+                }
+            }
         }
 
         DB::table('ad_banner')->where('id', $id)->delete();
