@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\PhotoHelper;
+use App\Services\SupabaseService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -122,11 +123,19 @@ class AddProfileController extends Controller
             return response()->json(['status'=>'error','message'=>'Profile already exists.'], 409);
         }
 
-        $photoPath = null;
         $photoUrl = null;
         if ($req->hasFile('photo')) {
-            $photoPath = $req->file('photo')->store('profiles/bidan', 'supabase');
-            $photoUrl = Storage::disk('supabase')->url($photoPath);
+            $supabase = new SupabaseService();
+            $result = $supabase->uploadFile($req->file('photo'), 'profiles/bidan');
+
+            if (!$result) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to upload photo to Supabase'
+                ], 500);
+            }
+
+            $photoUrl = $result['public_url']; // Simpan full URL
         }
 
         DB::table('bidan_profile')->insert([
@@ -175,11 +184,19 @@ class AddProfileController extends Controller
             return response()->json(['status'=>'error','message'=>'Profile already exists.'], 409);
         }
 
-        $photoPath = null;
         $photoUrl = null;
         if ($req->hasFile('photo')) {
-            $photoPath = $req->file('photo')->store('profiles/dinkes', 'supabase');
-            $photoUrl = Storage::disk('supabase')->url($photoPath);
+            $supabase = new SupabaseService();
+            $result = $supabase->uploadFile($req->file('photo'), 'profiles/dinkes');
+
+            if (!$result) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to upload photo to Supabase'
+                ], 500);
+            }
+
+            $photoUrl = $result['public_url'];
         }
 
         DB::table('user_dinkes')->insert([
@@ -226,11 +243,19 @@ class AddProfileController extends Controller
             return response()->json(['status'=>'error','message'=>'Profile already exists.'], 409);
         }
 
-        $photoPath = null;
         $photoUrl = null;
         if ($req->hasFile('photo')) {
-            $photoPath = $req->file('photo')->store('profiles/ibu', 'supabase');
-            $photoUrl = Storage::disk('supabase')->url($photoPath);
+            $supabase = new SupabaseService();
+            $result = $supabase->uploadFile($req->file('photo'), 'profiles/ibu');
+
+            if (!$result) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to upload photo to Supabase'
+                ], 500);
+            }
+
+            $photoUrl = $result['public_url'];
         }
 
         DB::table('user_profile')->insert([
@@ -291,15 +316,27 @@ class AddProfileController extends Controller
         ]));
 
         if ($req->hasFile('photo')) {
-            $newPath = $req->file('photo')->store('profiles/bidan', 'supabase');
-            $data['photo'] = Storage::disk('supabase')->url($newPath);
+            $supabase = new SupabaseService();
+            $result = $supabase->uploadFile($req->file('photo'), 'profiles/bidan');
+
+            if (!$result) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to upload photo to Supabase'
+                ], 500);
+            }
+
+            $data['photo'] = $result['public_url'];
 
             // Hapus file lama dari Supabase jika ada path lama
             if (!empty($existing->photo)) {
-                // Extract path dari URL lama jika photo disimpan sebagai full URL
                 $oldPath = PhotoHelper::extractPathFromUrl($existing->photo);
-                if ($oldPath && Storage::disk('supabase')->exists($oldPath)) {
-                    Storage::disk('supabase')->delete($oldPath);
+                if ($oldPath) {
+                    try {
+                        $supabase->delete($oldPath);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to delete old photo: ' . $e->getMessage());
+                    }
                 }
             }
         }
@@ -332,14 +369,27 @@ class AddProfileController extends Controller
         $data = $this->onlyNotNull($req->only(['jabatan','nip']));
 
         if ($req->hasFile('photo')) {
-            $newPath = $req->file('photo')->store('profiles/dinkes', 'supabase');
-            $data['photo'] = Storage::disk('supabase')->url($newPath);
+            $supabase = new SupabaseService();
+            $result = $supabase->uploadFile($req->file('photo'), 'profiles/dinkes');
+
+            if (!$result) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to upload photo to Supabase'
+                ], 500);
+            }
+
+            $data['photo'] = $result['public_url'];
 
             // Hapus file lama dari Supabase jika ada path lama
             if (!empty($existing->photo)) {
                 $oldPath = PhotoHelper::extractPathFromUrl($existing->photo);
-                if ($oldPath && Storage::disk('supabase')->exists($oldPath)) {
-                    Storage::disk('supabase')->delete($oldPath);
+                if ($oldPath) {
+                    try {
+                        $supabase->delete($oldPath);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to delete old photo: ' . $e->getMessage());
+                    }
                 }
             }
         }

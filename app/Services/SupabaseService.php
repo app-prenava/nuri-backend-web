@@ -17,7 +17,8 @@ class SupabaseService
     public function __construct()
     {
         $this->baseUrl = rtrim(env('SUPABASE_URL', ''), '/');
-        $this->bucket = env('SUPABASE_BUCKET', 'images');
+        // Use SUPABASE_S3_BUCKET for consistency with other config
+        $this->bucket = env('SUPABASE_S3_BUCKET', 'img');
         $this->serviceRoleKey = env('SUPABASE_SERVICE_ROLE_KEY', '');
 
         // Validate required configuration
