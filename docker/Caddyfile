@@ -2,7 +2,7 @@
     order php_server before file_server
 }
 
-prenava.web.id {
+prenava.web.id, service.prenava.web.id {
     root * /app/public
     php_server
     file_server
