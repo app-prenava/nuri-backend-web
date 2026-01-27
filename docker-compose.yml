@@ -5,20 +5,20 @@ services:
       dockerfile: docker/frankenphp.Dockerfile
     container_name: nuri-backend-app
     restart: unless-stopped
-    volumes:
-      - ./:/app
     depends_on:
       - mysql
       - redis
     networks:
       - nuri-net
     ports:
-      - "8000:80"
+      - "80:80"
+      - "443:443"
     environment:
-      APP_ENV: local
-      APP_DEBUG: true
+      APP_ENV: production
+      APP_DEBUG: false
       APP_KEY: ${APP_KEY}
-      APP_URL: http://localhost:8000
+      APP_URL: https://prenava.web.id
+
 
       DB_CONNECTION: mysql
       DB_HOST: mysql
