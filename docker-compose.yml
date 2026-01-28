@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   app:
     build:
@@ -10,9 +12,6 @@ services:
       - redis
     networks:
       - nuri-net
-    ports:
-      - "80:80"
-      - "443:443"
     volumes:
       - ./:/app
     environment:
@@ -20,7 +19,6 @@ services:
       APP_DEBUG: true
       APP_KEY: ${APP_KEY}
       APP_URL: https://prenava.web.id
-
 
       DB_CONNECTION: mysql
       DB_HOST: mysql
@@ -38,7 +36,6 @@ services:
       REDIS_URL: "tcp://redis:6379"
       REDIS_DB: 0
       REDIS_CACHE_DB: 1
-
 
   mysql:
     image: mysql:8.0
@@ -83,9 +80,27 @@ services:
     ports:
       - "8081:80"
 
+  caddy:
+    image: caddy:2
+    container_name: nuri-backend-caddy
+    restart: unless-stopped
+    depends_on:
+      - app
+    networks:
+      - nuri-net
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data        
+      - caddy_config:/config   
+
 volumes:
   mysql_data:
   redis_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   nuri-net:
