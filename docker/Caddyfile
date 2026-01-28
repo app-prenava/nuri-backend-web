@@ -1,5 +1,6 @@
 {
     order php_server before file_server
+    auto_https off
 }
 
 prenava.web.id, service.prenava.web.id {

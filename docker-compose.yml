@@ -80,22 +80,6 @@ services:
     ports:
       - "8081:80"
 
-  caddy:
-    image: dunglas/frankenphp:1-php8.2
-    container_name: nuri-backend-caddy
-    restart: unless-stopped
-    depends_on:
-      - app
-    networks:
-      - nuri-net
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data        
-      - caddy_config:/config   
-
 volumes:
   mysql_data:
   redis_data:
