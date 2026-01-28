@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Support\AuthToken;
 use Illuminate\Support\Collection;
 
+
 class BannerController extends Controller
 {
     public function create(Request $request): JsonResponse
@@ -23,24 +24,12 @@ class BannerController extends Controller
 
         $data = $request->validate([
             'name'      => ['required','string','max:255'],
-            'photo'     => ['required','file','mimes:jpg,jpeg,png,webp','max:2000'],
+            'photo'     => ['required','file','mimes:jpg,jpeg,png,webp','max:500'],
             'is_active' => ['nullable','boolean'],
             'url'       => ['required','string','max:2048','url'],
         ], $messages);
 
-        // Upload ke Supabase Storage
-        $supabase = new \App\Services\SupabaseService();
-        $result = $supabase->uploadFile($request->file('photo'), 'banners');
-
-        if (!$result) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to upload photo to Supabase'
-            ], 500);
-        }
-
-        $photoUrl = $result['public_url'];
-        $path = $result['path'];
+        $path = $request->file('photo')->store('banners', 'public');
 
         DB::table('ad_banner')->insert([
             'name'       => $data['name'],
@@ -50,6 +39,8 @@ class BannerController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        $photoUrl = $path ? asset('storage/' . $path) : null;
 
         return response()->json([
             'status'  => 'success',
@@ -93,29 +84,11 @@ class BannerController extends Controller
         if ($request->has('url'))       $update['url'] = $data['url'];
 
         if ($request->hasFile('photo')) {
-            // Upload ke Supabase Storage
-            $supabase = new \App\Services\SupabaseService();
-            $result = $supabase->uploadFile($request->file('photo'), 'banners');
+            $newPath = $request->file('photo')->store('banners', 'public');
+            $update['photo'] = $newPath;
 
-            if (!$result) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Failed to upload photo to Supabase'
-                ], 500);
-            }
-
-            $update['photo'] = $result['path'];
-
-            // Hapus file lama dari Supabase
-            if (!empty($banner->photo)) {
-                $oldPath = \App\Helpers\PhotoHelper::extractPathFromUrl($banner->photo);
-                if ($oldPath) {
-                    try {
-                        $supabase->delete($oldPath);
-                    } catch (\Exception $e) {
-                        \Log::error('Failed to delete old photo: ' . $e->getMessage());
-                    }
-                }
+            if (!empty($banner->photo) && Storage::disk('public')->exists($banner->photo)) {
+                Storage::disk('public')->delete($banner->photo);
             }
         }
 
@@ -142,17 +115,8 @@ class BannerController extends Controller
             ], 404);
         }
 
-        // Hapus file dari Supabase
-        if (!empty($banner->photo)) {
-            $oldPath = \App\Helpers\PhotoHelper::extractPathFromUrl($banner->photo);
-            if ($oldPath) {
-                try {
-                    $supabase = new \App\Services\SupabaseService();
-                    $supabase->delete($oldPath);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to delete old photo: ' . $e->getMessage());
-                }
-            }
+        if (!empty($banner->photo) && Storage::disk('public')->exists($banner->photo)) {
+            Storage::disk('public')->delete($banner->photo);
         }
 
         DB::table('ad_banner')->where('id', $id)->delete();
@@ -196,10 +160,13 @@ class BannerController extends Controller
     /** @return \Illuminate\Support\Collection */
     private function transformBannerPhotos(Collection $rows): Collection
     {
-        return $rows->map(function ($r) {
-            // Generate public URL dari path yang tersimpan
-            $r->photo = Storage::disk('supabase')->url($r->photo);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+
+        return $rows->map(function ($r) use ($disk) {
+            $r->photo = $disk->url($r->photo);
             return $r;
         });
     }
+
 }
