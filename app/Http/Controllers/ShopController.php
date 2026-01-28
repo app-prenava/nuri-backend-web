@@ -5,15 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use App\Support\AuthToken;
 use App\Helpers\ShopLog;
-use App\Models\ShopReview;
 
 class ShopController extends Controller
 {
-
     protected function formatPrice(string $price): string
     {
         $clean = preg_replace('/\D/', '', $price);
@@ -23,34 +21,26 @@ class ShopController extends Controller
 
     public function getAll(Request $request)
     {
-        [$uid, $role] = AuthToken::assertRoleFresh($request, ['ibu_hamil', 'admin']);
+        [$uid, $role] = AuthToken::assertRoleFresh($request, 'ibu_hamil');
 
         $data = (int) $request->query('data', 30);
         $page = (int) $request->query('page', 1);
-        $category = $request->query('category');
 
         if ($data < 1) $data = 1;
         if ($data > 100) $data = 100;
         if ($page < 1) $page = 1;
 
-        $query = DB::table('shop')
-            ->leftJoin('users', 'shop.user_id', '=', 'users.user_id')
-            ->select('shop.*', 'users.name as seller_name');
-
-        if (!empty($category)) {
-            $query->where('category', $category);
-        }
-
-        $query->orderByDesc('product_id');
+        $query = DB::table('shop')->orderByDesc('product_id');
 
         $total = $query->count();
         $result = $query
             ->offset(($page - 1) * $data)
             ->limit($data)
-            ->get();
-
-        // Transform photo paths to full URLs
-        $result = $this->transformShopPhotos($result);
+            ->get()
+            ->map(function ($item) {
+                $item->photo = url('storage/' . ltrim($item->photo, '/'));
+                return $item;
+            });
 
         return response()->json([
             'current_page' => $page,
@@ -69,31 +59,24 @@ class ShopController extends Controller
 
         $data = (int) $request->query('data', 30);
         $page = (int) $request->query('page', 1);
-        $category = $request->query('category');
 
         if ($data < 1) $data = 1;
         if ($data > 100) $data = 100;
         if ($page < 1) $page = 1;
 
         $query = DB::table('shop')
-            ->leftJoin('users', 'shop.user_id', '=', 'users.user_id')
-            ->select('shop.*', 'users.name as seller_name')
-            ->where('shop.user_id', $uid);
-
-        if (!empty($category)) {
-            $query->where('category', $category);
-        }
-
-        $query->orderByDesc('product_id');
+            ->where('user_id', $uid)
+            ->orderByDesc('product_id');
 
         $total = $query->count();
         $result = $query
             ->offset(($page - 1) * $data)
             ->limit($data)
-            ->get();
-
-        // Transform photo paths to full URLs
-        $result = $this->transformShopPhotos($result);
+            ->get()
+            ->map(function ($item) {
+                $item->photo = url('storage/' . ltrim($item->photo, '/'));
+                return $item;
+            });
 
         return response()->json([
             'current_page' => $page,
@@ -122,50 +105,32 @@ class ShopController extends Controller
             'product_name' => ['required', 'string', 'max:255'],
             'price'        => ['required', 'string', 'max:50'],
             'url'          => ['required', 'url', 'max:2048'],
-            'description'  => ['nullable', 'string', 'max:2000'],
-            'category'     => ['nullable', 'string', 'in:vitamin,makanan,peralatan_bayi,kesehatan,lainnya'],
             'photo'        => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:500'],
         ], $messages);
 
         if ($v->fails()) return response()->json(['status' => 'error', 'errors' => $v->errors()], 422);
 
-        // Upload ke Supabase Storage
-        $supabase = new \App\Services\SupabaseService();
-        $result = $supabase->uploadFile($request->file('photo'), 'shop');
-
-        if (!$result) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to upload photo to Supabase'
-            ], 500);
-        }
-
-        $photoUrl = $result['public_url'];
-        $path = $result['path'];
-
+        $path = $request->file('photo')->store('shop', 'public');
         $priceFormatted = $this->formatPrice($request->price);
 
         $product_id = DB::table('shop')->insertGetId([
             'user_id'      => $uid,
             'product_name' => $request->product_name,
-            'category'     => $request->category,
-            'description'  => $request->description,
             'price'        => $priceFormatted,
             'url'          => $request->url,
-            'photo'        => $path,  // Simpan path saja
-            'average_rating' => 0,
-            'rating_count'   => 0,
+            'photo'        => $path,
             'created_at'   => now(),
             'updated_at'   => now(),
         ]);
 
+        $photoUrl = $path ? asset('storage/' . $path) : null;
+
         ShopLog::record('create', $uid, [
             'product_id'   => $product_id,
             'product_name' => $request->product_name,
-            'category'     => $request->category,
             'price'        => $priceFormatted,
             'url'          => $request->url,
-            'photo'        => $photoUrl,  // Log full URL
+            'photo'        => $photoUrl,
         ]);
 
         return response()->json([
@@ -174,12 +139,9 @@ class ShopController extends Controller
             'data'    => [
                 'product_id'   => $product_id,
                 'product_name' => $request->product_name,
-                'description'  => $request->description,
                 'price'        => $priceFormatted,
                 'url'          => $request->url,
-                'photo'        => $photoUrl,  // Return full URL
-                'average_rating' => 0,
-                'rating_count'   => 0,
+                'photo'        => $photoUrl,
             ],
         ], 201);
     }
@@ -205,8 +167,6 @@ class ShopController extends Controller
             'product_name' => ['sometimes', 'required', 'string', 'max:255'],
             'price'        => ['sometimes', 'required', 'string', 'max:50'],
             'url'          => ['sometimes', 'required', 'url', 'max:2048'],
-            'description'  => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'category'     => ['sometimes', 'nullable', 'string', 'in:vitamin,makanan,peralatan_bayi,kesehatan,lainnya'],
             'photo'        => ['sometimes', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:500'],
         ], $messages);
 
@@ -218,33 +178,13 @@ class ShopController extends Controller
         if ($request->has('product_name')) $update['product_name'] = $request->product_name;
         if ($request->has('price')) $update['price'] = $this->formatPrice($request->price);
         if ($request->has('url')) $update['url'] = $request->url;
-        if ($request->has('description')) $update['description'] = $request->description;
-        if ($request->has('category')) $update['category'] = $request->category;
 
         if ($request->hasFile('photo')) {
-            // Upload ke Supabase Storage
-            $supabase = new \App\Services\SupabaseService();
-            $result = $supabase->uploadFile($request->file('photo'), 'shop');
+            $newPath = $request->file('photo')->store('shop', 'public');
+            $update['photo'] = $newPath;
 
-            if (!$result) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Failed to upload photo to Supabase'
-                ], 500);
-            }
-
-            $update['photo'] = $result['path'];
-
-            // Hapus file lama dari Supabase
-            if (!empty($row->photo)) {
-                $oldPath = \App\Helpers\PhotoHelper::extractPathFromUrl($row->photo);
-                if ($oldPath) {
-                    try {
-                        $supabase->delete($oldPath);
-                    } catch (\Exception $e) {
-                        \Log::error('Failed to delete old photo: ' . $e->getMessage());
-                    }
-                }
+            if (!empty($row->photo) && Storage::disk('public')->exists($row->photo)) {
+                Storage::disk('public')->delete($row->photo);
             }
         }
 
@@ -253,7 +193,9 @@ class ShopController extends Controller
         DB::table('shop')->where('product_id', $id)->update($update);
 
         $merged = array_merge((array) $row, $update);
-        // Photo sudah berupa public URL dari Supabase
+        $merged['photo'] = isset($update['photo'])
+            ? asset('storage/' . $update['photo'])
+            : asset('storage/' . $row->photo);
 
         ShopLog::record('update', $uid, $merged);
 
@@ -281,9 +223,8 @@ class ShopController extends Controller
             ], 403);
         }
 
-        // Hapus file dari Supabase
-        if (!empty($row->photo) && Storage::disk('supabase')->exists($row->photo)) {
-            Storage::disk('supabase')->delete($row->photo);
+        if (!empty($row->photo) && Storage::disk('public')->exists($row->photo)) {
+            Storage::disk('public')->delete($row->photo);
         }
 
         DB::table('shop')->where('product_id', $id)->delete();
@@ -299,180 +240,6 @@ class ShopController extends Controller
             'status'  => 'success',
             'message' => 'Produk berhasil dihapus.',
         ]);
-    }
-
-    /**
-     * Simpan atau perbarui review untuk satu produk oleh user yang sedang login.
-     */
-    public function upsertReview(Request $request, int $productId): JsonResponse
-    {
-        [$uid, $role] = AuthToken::assertRoleFresh($request, ['ibu_hamil', 'bidan', 'admin']);
-
-        $product = DB::table('shop')->where('product_id', $productId)->first();
-        if (! $product) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Produk tidak ditemukan.',
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'rating'  => ['required', 'integer', 'min:1', 'max:5'],
-            'comment' => ['nullable', 'string', 'max:2000'],
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $now = now();
-
-        $existing = ShopReview::where('product_id', $productId)
-            ->where('user_id', $uid)
-            ->first();
-
-        if ($existing) {
-            $existing->rating  = (int) $request->rating;
-            $existing->comment = $request->comment;
-            $existing->updated_at = $now;
-            $existing->save();
-            $review = $existing;
-            $message = 'Review berhasil diperbarui.';
-        } else {
-            $review = ShopReview::create([
-                'product_id' => $productId,
-                'user_id'    => $uid,
-                'rating'     => (int) $request->rating,
-                'comment'    => $request->comment,
-            ]);
-            $message = 'Review berhasil ditambahkan.';
-        }
-
-        $this->recalculateProductRating($productId);
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => $message,
-            'data'    => $review,
-        ], 201);
-    }
-
-    /**
-     * Ambil daftar review untuk satu produk (dengan pagination sederhana).
-     */
-    public function getReviews(Request $request, int $productId): JsonResponse
-    {
-        // Hanya memastikan user login & akun aktif, role bebas selama valid
-        AuthToken::ensureActiveAndFreshOrFail($request);
-
-        $product = DB::table('shop')->where('product_id', $productId)->first();
-        if (! $product) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Produk tidak ditemukan.',
-            ], 404);
-        }
-
-        $perPage = (int) $request->query('data', 10);
-        $page    = (int) $request->query('page', 1);
-
-        if ($perPage < 1) $perPage = 1;
-        if ($perPage > 100) $perPage = 100;
-        if ($page < 1) $page = 1;
-
-        $query = DB::table('shop_reviews')
-            ->leftJoin('users', 'shop_reviews.user_id', '=', 'users.user_id')
-            ->where('shop_reviews.product_id', $productId)
-            ->orderByDesc('shop_reviews.created_at');
-
-        $total  = $query->count();
-        $offset = ($page - 1) * $perPage;
-
-        $items = $query
-            ->offset($offset)
-            ->limit($perPage)
-            ->select(
-                'shop_reviews.id',
-                'shop_reviews.product_id',
-                'shop_reviews.user_id',
-                'shop_reviews.rating',
-                'shop_reviews.comment',
-                'shop_reviews.created_at',
-                'shop_reviews.updated_at',
-                'users.name as user_name',
-                DB::raw('NULL as user_profile_image')
-            )
-            ->get();
-
-        return response()->json([
-            'status'       => 'success',
-            'current_page' => $page,
-            'per_page'     => $perPage,
-            'total'        => $total,
-            'last_page'    => (int) ceil($total / $perPage),
-            'from'         => $total === 0 ? 0 : $offset + 1,
-            'to'           => $offset + $items->count(),
-            'data'         => $items,
-        ]);
-    }
-
-    /**
-     * Hapus review milik sendiri (atau oleh admin).
-     */
-    public function deleteReview(Request $request, int $productId, int $reviewId): JsonResponse
-    {
-        [$uid, $role] = AuthToken::assertRoleFresh($request, ['ibu_hamil', 'bidan', 'admin']);
-
-        $review = ShopReview::where('id', $reviewId)
-            ->where('product_id', $productId)
-            ->first();
-
-        if (! $review) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Review tidak ditemukan.',
-            ], 404);
-        }
-
-        if ($role !== 'admin' && (int) $review->user_id !== $uid) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Kamu tidak memiliki izin untuk menghapus review ini.',
-            ], 403);
-        }
-
-        $review->delete();
-
-        $this->recalculateProductRating($productId);
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Review berhasil dihapus.',
-        ]);
-    }
-
-    /**
-     * Hitung ulang rata-rata rating dan jumlah review untuk satu produk.
-     */
-    protected function recalculateProductRating(int $productId): void
-    {
-        $aggregate = ShopReview::where('product_id', $productId)
-            ->selectRaw('COUNT(*) as total, AVG(rating) as avg_rating')
-            ->first();
-
-        $count = (int) ($aggregate->total ?? 0);
-        $avg   = $count > 0 ? round((float) $aggregate->avg_rating, 2) : 0;
-
-        DB::table('shop')
-            ->where('product_id', $productId)
-            ->update([
-                'average_rating' => $avg,
-                'rating_count'   => $count,
-                'updated_at'     => now(),
-            ]);
     }
 
     public function getShopLogs(Request $request)
@@ -512,16 +279,5 @@ class ShopController extends Controller
         ]);
     }
 
-    /**
-     * Transform shop photo paths to full URLs
-     */
-    private function transformShopPhotos($items)
-    {
-        return collect($items)->map(function ($item) {
-            if (!empty($item->photo)) {
-                $item->photo = \App\Helpers\PhotoHelper::transformPhotoUrl($item->photo, 'supabase');
-            }
-            return $item;
-        });
-    }
+
 }
