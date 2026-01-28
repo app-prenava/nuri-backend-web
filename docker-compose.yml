@@ -81,7 +81,7 @@ services:
       - "8081:80"
 
   caddy:
-    image: caddy:2
+    image: dunglas/frankenphp:1-php8.2
     container_name: nuri-backend-caddy
     restart: unless-stopped
     depends_on:
