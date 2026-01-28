@@ -14,13 +14,13 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./:/app               
-      - ./.env:/app/.env  
+      - ./:/app
     environment:
       APP_ENV: production
-      APP_DEBUG: false
-      APP_KEY: base64:tIibNdhAavArXMGOjl1Q+mqPTJ2KibURxgIs4Y7rWmw=  
+      APP_DEBUG: true
+      APP_KEY: base64:tIibNdhAavArXMGOjl1Q+mqPTJ2KibURxgIs4Y7rWmw=
       APP_URL: https://prenava.web.id
+
 
       DB_CONNECTION: mysql
       DB_HOST: mysql
