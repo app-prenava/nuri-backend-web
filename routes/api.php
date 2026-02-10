@@ -86,9 +86,19 @@ Route::post('/shop/{id}/reviews', [ShopController::class, 'upsertReview']);
 Route::delete('/shop/{productId}/reviews/{reviewId}', [ShopController::class, 'deleteReview']);
 
 Route::post('/pregnancies/create', [PregnancyController::class, 'create']);
-Route::post('/recomendation/sports', [RecomendationSportController::class, 'create']);
-Route::get('/recomendation/sports',  [RecomendationSportController::class, 'get']);
+Route::post('/recomendation/sports/create', [RecomendationSportController::class, 'createRecomendation']);
+Route::get('/recomendation/sports/get', [
+    RecomendationSportController::class,
+    'getSportRecommendation'
+]);
 
+Route::prefix('recomendation/sport')->group(function () {
+    Route::get('/', [RecomendationSportController::class, 'indexSportMeta']);
+    Route::get('/{activity}', [RecomendationSportController::class, 'showSportMeta']);
+    Route::post('/', [RecomendationSportController::class, 'storeSportMeta']);
+    Route::put('/{activity}', [RecomendationSportController::class, 'updateSportMeta']);
+    Route::delete('/{activity}', [RecomendationSportController::class, 'deleteSportMeta']);
+});
 
 Route::post('/admin/users/{userId}/deactivate', [AdminUserStatusController::class, 'deactivate']);
 Route::post('/admin/users/{userId}/activate',   [AdminUserStatusController::class, 'activate']);
