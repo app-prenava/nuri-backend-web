@@ -87,6 +87,8 @@ Route::delete('/shop/{productId}/reviews/{reviewId}', [ShopController::class, 'd
 
 Route::post('/pregnancies/create', [PregnancyController::class, 'create']);
 Route::post('/recomendation/sports', [RecomendationSportController::class, 'create']);
+Route::get('/recomendation/sports',  [RecomendationSportController::class, 'get']);
+
 
 Route::post('/admin/users/{userId}/deactivate', [AdminUserStatusController::class, 'deactivate']);
 Route::post('/admin/users/{userId}/activate',   [AdminUserStatusController::class, 'activate']);
