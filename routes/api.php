@@ -86,7 +86,11 @@ Route::post('/shop/{id}/reviews', [ShopController::class, 'upsertReview']);
 Route::delete('/shop/{productId}/reviews/{reviewId}', [ShopController::class, 'deleteReview']);
 
 Route::post('/pregnancies/create', [PregnancyController::class, 'create']);
-Route::post('/recomendation/sports', [RecomendationSportController::class, 'getRecomendation']);
+Route::post('/recomendation/sports/create', [RecomendationSportController::class, 'createRecomendation']);
+Route::get('/recomendation/sports/get', [
+    RecomendationSportController::class,
+    'getSportRecommendation'
+]);
 
 Route::prefix('recomendation/sport')->group(function () {
     Route::get('/', [RecomendationSportController::class, 'indexSportMeta']);
