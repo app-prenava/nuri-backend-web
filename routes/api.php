@@ -35,6 +35,12 @@ use App\Http\Controllers\TipCategoryController;
 use App\Http\Controllers\PregnancyTipController;
 use App\Http\Controllers\CatatanIbuController;
 
+// Bidan Subscription Controllers
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\AdminBidanController;
+use App\Http\Controllers\BidanDashboardController;
+use App\Http\Controllers\UserBidanController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('/debug/redis-likes', [RedisDebugController::class, 'likes']);
@@ -258,5 +264,74 @@ Route::get('/', function () {
     return response()->json([
         'message' => 'Welcome to Prenava Backend',
     ], 200);
+});
+
+// ============================================
+// BIDAN SUBSCRIPTION & APPOINTMENT ROUTES
+// ============================================
+
+// Public Routes (No Auth Required)
+Route::prefix('public')->group(function () {
+    // Subscription Plans
+    Route::get('/subscription-plans', [SubscriptionController::class, 'getPlans']);
+    
+    // Bidan Applications
+    Route::post('/bidan-applications', [SubscriptionController::class, 'submitApplication']);
+    Route::get('/bidan-applications/status', [SubscriptionController::class, 'checkApplicationStatus']);
+});
+
+// Admin Routes (Protected: role=admin)
+Route::prefix('admin')->middleware(['auth:api'])->group(function () {
+    // Subscription Plans Management
+    Route::get('/subscription-plans', [AdminBidanController::class, 'getPlans']);
+    Route::post('/subscription-plans', [AdminBidanController::class, 'createPlan']);
+    Route::put('/subscription-plans/{id}', [AdminBidanController::class, 'updatePlan']);
+    
+    // Bidan Applications Management
+    Route::get('/bidan-applications', [AdminBidanController::class, 'getApplications']);
+    Route::get('/bidan-applications/{id}', [AdminBidanController::class, 'getApplicationDetail']);
+    Route::patch('/bidan-applications/{id}/approve', [AdminBidanController::class, 'approveApplication']);
+    Route::patch('/bidan-applications/{id}/reject', [AdminBidanController::class, 'rejectApplication']);
+    
+    // Bidan Account Management
+    Route::post('/bidans', [AdminBidanController::class, 'createBidanAccount']);
+    Route::get('/bidans', [AdminBidanController::class, 'getBidans']);
+    Route::patch('/bidans/{id}/status', [AdminBidanController::class, 'updateBidanStatus']);
+    
+    // Bidan Location Management
+    Route::post('/bidans/{id}/location', [AdminBidanController::class, 'setBidanLocation']);
+    Route::get('/bidan-locations', [AdminBidanController::class, 'getBidanLocations']);
+    Route::put('/bidan-locations/{id}', [AdminBidanController::class, 'updateBidanLocation']);
+    Route::patch('/bidan-locations/{id}/toggle-active', [AdminBidanController::class, 'toggleLocationActive']);
+});
+
+// Bidan Dashboard Routes (Protected: role=bidan)
+Route::prefix('bidan')->middleware(['auth:api'])->group(function () {
+    // Profile & Subscription
+    Route::get('/me', [BidanDashboardController::class, 'me']);
+    Route::put('/me', [BidanDashboardController::class, 'updateProfile']);
+    
+    // Appointments Management
+    Route::get('/appointments', [BidanDashboardController::class, 'getAppointments']);
+    Route::get('/appointments/{id}', [BidanDashboardController::class, 'getAppointmentDetail']);
+    Route::patch('/appointments/{id}/accept', [BidanDashboardController::class, 'acceptAppointment']);
+    Route::patch('/appointments/{id}/reject', [BidanDashboardController::class, 'rejectAppointment']);
+    Route::patch('/appointments/{id}/complete', [BidanDashboardController::class, 'completeAppointment']);
+});
+
+// User (Mobile) Routes for Bidan Discovery & Appointments (Protected: role=ibu_hamil)
+Route::prefix('user')->middleware(['auth:api'])->group(function () {
+    // Bidan Discovery
+    Route::get('/bidans/locations', [UserBidanController::class, 'getLocations']);
+    Route::get('/bidans/{id}', [UserBidanController::class, 'getBidanDetail']);
+    
+    // Consent Info
+    Route::get('/consent-info', [UserBidanController::class, 'getConsentInfo']);
+    
+    // Appointments
+    Route::post('/appointments', [UserBidanController::class, 'createAppointment']);
+    Route::get('/appointments', [UserBidanController::class, 'getAppointments']);
+    Route::get('/appointments/{id}', [UserBidanController::class, 'getAppointmentDetail']);
+    Route::patch('/appointments/{id}/cancel', [UserBidanController::class, 'cancelAppointment']);
 });
 
