@@ -32,6 +32,10 @@ RUN chmod 0644 /etc/cron.d/laravel-cron && crontab /etc/cron.d/laravel-cron && t
 # Jangan cache config/route/view saat build, biar bisa pakai env variables dari Railway
 RUN php artisan package:discover --ansi
 
+# Create startup script to run migrations
+COPY ./docker/start-service.sh /usr/local/bin/start-service.sh
+RUN chmod +x /usr/local/bin/start-service.sh
+
 EXPOSE 80
 
-CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
+CMD ["start-service.sh"]
